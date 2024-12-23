@@ -38,25 +38,32 @@ export const NewsList = () => {
   const news = useGlobalStore((state) => state.news);
 
   return (
-    <Container sx={{ mt: 9 }} maxWidth="xl">
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        mb: 3,
-      }}
-    >
-      <Typography variant="h4">Gestión de Noticias</Typography>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => navigate("/nueva-publicacion")}
+    <Box sx={{ width: "100%", mt: 9, px: 2 }}> 
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between", 
+          alignItems: "center",
+          mb: 3,
+        }}
       >
-        Nueva Publicación
-      </Button>
-    </Box>
-    {loadingNews ? (
+        <Typography
+          variant="h4"
+          sx={{
+            textAlign: "left", 
+          }}
+        >
+          Gestión de Noticias
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => navigate("/nueva-publicacion")}
+        >
+          Nueva Publicación
+        </Button>
+      </Box>
+      {loadingNews ? (
         <Box
           sx={{
             display: "flex",
@@ -68,44 +75,44 @@ export const NewsList = () => {
           <CircularProgress />
         </Box>
       ) : (
-
-    <Grid container spacing={2}>
-      {news &&
-        news.map((noticia: New, index: number) => (
-          <Grid
-            item
-            xs={12}
-            key={index}
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              borderBottom: "1px solid #e0e0e0",
-              py: 2,
-            }}
-          >
-            <Box>
-              <Typography variant="h6">{noticia.title}</Typography>
-            </Box>
-            <Box>
-              <IconButton
-                color="primary"
-                onClick={() => handleEdit(noticia._id)}
+        <Box sx={{ width: "100%" }}> 
+          {news &&
+            news.map((noticia: New, index: number) => (
+              <Box
+                key={index}
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between", 
+                  alignItems: "center",
+                  borderBottom: "1px solid #e0e0e0",
+                  py: 2,
+                }}
               >
-                <EditIcon />
-              </IconButton>
-              <IconButton
-                color="secondary"
-                onClick={() => handleDelete(noticia._id)}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Box>
-          </Grid>
-        ))}
-    </Grid>
+                <Typography
+                  variant="h6"
+                  sx={{ flex: 1, textAlign: "left" }} 
+                >
+                  {noticia.title}
+                </Typography>
+                <Box sx={{ display: "flex", gap: 1 }}>
+                  <IconButton
+                    color="primary"
+                    onClick={() => handleEdit(noticia._id)}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton
+                    color="secondary"
+                    onClick={() => handleDelete(noticia._id)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              </Box>
+            ))}
+        </Box>
       )}
-  </Container>
+    </Box>
   );
 };
 
