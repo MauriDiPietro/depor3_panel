@@ -1,6 +1,4 @@
 import {
-  Container,
-  Grid,
   Typography,
   Box,
   IconButton,
@@ -18,7 +16,7 @@ export const NewsList = () => {
 
   const getAllNews = useGlobalStore(state => state.getAllNews);
   const loadingNews = useGlobalStore(state => state.loadingNews);
-  const errorNews = useGlobalStore(state => state.errorNews);
+  // const errorNews = useGlobalStore(state => state.errorNews);
 
   useEffect(()=>{
     getAllNews()
