@@ -6,6 +6,6 @@ export type New = {
   author: string;
   body: string;
   image: string;
-  date: string;
-  active: boolean;
+  date?: string;
+  active?: boolean;
 };

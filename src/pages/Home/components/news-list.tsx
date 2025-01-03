@@ -16,12 +16,12 @@ import { useEffect } from "react";
 
 export const NewsList = () => {
 
-  const getNoticias = useGlobalStore(state => state.getNoticias);
+  const getAllNews = useGlobalStore(state => state.getAllNews);
   const loadingNews = useGlobalStore(state => state.loadingNews);
   const errorNews = useGlobalStore(state => state.errorNews);
 
   useEffect(()=>{
-    getNoticias()
+    getAllNews()
   }, []);
 
   const navigate = useNavigate();
@@ -77,7 +77,8 @@ export const NewsList = () => {
       ) : (
         <Box sx={{ width: "100%" }}> 
           {news &&
-            news.map((noticia: New, index: number) => (
+          news.filter((noticia: New) => noticia.active)
+            .map((noticia: New, index: number) => (
               <Box
                 key={index}
                 sx={{
