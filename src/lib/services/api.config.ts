@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const baseUrl = 'http://localhost:8080/api'
+// const baseUrl = 'http://localhost:8080/api'
+const baseUrl = 'https://depor3-api.vercel.app/api'
 
 const procesarError = (err: any) => {
   if (err.response?.data) {
