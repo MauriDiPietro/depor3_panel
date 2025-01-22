@@ -4,18 +4,24 @@ import NewsService from "../../lib/services/news.service";
 
 export interface NewsState {
   news: New[] | [];
+  new: any;
   loadingNews: boolean;
   newsLoaded: boolean;
   errorNews: boolean;
   newCreated: boolean;
+  newDeleted: boolean;
   errorCreateNew: boolean;
+  errorDeleteNew: boolean;
 }
 
 export interface NewsActions {
   resetCargaDatosState: () => void;
   getAllNews: () => void;
   createNew: (body: New) => void;
+  updateNew: (id: string, body: New) => void;
   createDraft: (body: New) => void;
+  getNewById: (id: string) => void;
+  deleteNewById: (id: string) => void;
 }
 
 export type NewsSlice = NewsState & NewsActions;
@@ -111,9 +117,12 @@ const initialState: NewsState = {
     // active: true,
     // },
   ],
+  new: null,
   loadingNews: false,
   newsLoaded: false,
+  newDeleted: false,
   errorNews: false,
+  errorDeleteNew: false,
   newCreated: false,
   errorCreateNew: false,
 };
@@ -133,10 +142,46 @@ export const createNewsSlice: StateCreator<NewsSlice> = (set) => ({
       set({ loadingNews: false });
     }
   },
+  getNewById: async (id: string) => {
+    set({ loadingNews: true });
+    try {
+      const response = await NewsService.getNewById(id);
+      if (!response) throw new Error("No se encontraron las noticias");
+      set({ new: response.data, newsLoaded: true });
+    } catch (error) {
+      set({ errorNews: true });
+    } finally {
+      set({ loadingNews: false });
+    }
+  },
+  deleteNewById: async (id: string) => {
+    set({ loadingNews: true });
+    try {
+      const response = await NewsService.deleteNewById(id);
+      if (!response) throw new Error("No se encontraron las noticias");
+      set({ newDeleted: true });
+    } catch (error) {
+      set({ errorNews: true });
+    } finally {
+      set({ loadingNews: false });
+    }
+  },
   createNew: async (body: New) => {
     set({ loadingNews: true });
     try {
       const response = await NewsService.createNew(body);
+      if (!response) throw new Error("Error al registrar noticia");
+      set({ newCreated: true });
+    } catch (error) {
+      set({ errorDeleteNew: true });
+    } finally {
+      set({ loadingNews: false });
+    }
+  },
+  updateNew: async (id: string, body: New) => {
+    set({ loadingNews: true });
+    try {
+      const response = await NewsService.updateNew(id, body);
       if (!response) throw new Error("Error al registrar noticia");
       set({ newCreated: true });
     } catch (error) {

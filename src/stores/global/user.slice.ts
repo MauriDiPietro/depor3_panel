@@ -41,11 +41,6 @@ export const createUserSlice: StateCreator<UserSlice> = (set) => ({
       });
     } catch (error) {
       set({ errorUser: true });
-    //   if (error instanceof PersonaError) {
-    //     navigate("/error-persona", { replace: true });
-    //   } else {
-    //     navigate("/error-tecnico", { replace: true });
-    //   }
     } finally {
       set({ loadingUser: false });
     }

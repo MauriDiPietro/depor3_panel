@@ -12,7 +12,7 @@ export const AppRouter: React.FC<{}> = () => {
             {/* rutas con navbar */}
             <Route path="/" element={<RouterLayout/>} > 
                 <Route path="/" element={<Home/>} />
-                <Route path="/nueva-publicacion" element={<Publicacion/>} />
+                <Route path="/publicacion/:id?" element={<Publicacion/>} />
             </Route>
             {/* rutas con navbar */}
                 <Route path="/login" element={<Login/>} />

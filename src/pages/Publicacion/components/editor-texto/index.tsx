@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "react-quill/dist/quill.snow.css";
 import {
   Box,
@@ -14,22 +14,34 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Autocomplete,
 } from "@mui/material";
 import ReactQuill from "react-quill";
-import { v4 as uuidv4 } from "uuid";
 import { useGlobalStore } from "../../../../stores/global";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 export const Editor: React.FC<{}> = () => {
-  const createNew = useGlobalStore((state) => state.createNew);
+  const quillRef = useRef<ReactQuill | null>(null); // Referencia al editor
+  const { id } = useParams<{ id: string }>();
 
-  const loadingNews = useGlobalStore((state) => state.loadingNews);
+  const createNew = useGlobalStore((state) => state.createNew);
+  const getNewById = useGlobalStore((state) => state.getNewById); // Función para obtener noticia
+  const updateNew = useGlobalStore((state) => state.updateNew);
+  const newDetail = useGlobalStore((state) => state.new);
+
+  // const loadingNews = useGlobalStore((state) => state.loadingNews);
   const newCreated = useGlobalStore((state) => state.newCreated);
+  const resetCargaDatosState = useGlobalStore(
+    (state) => state.resetCargaDatosState
+  );
+
   const errorCreateNew = useGlobalStore((state) => state.errorCreateNew);
+
+  const [formLoaded, setFormLoaded] = useState<boolean>(false);
 
   const navigate = useNavigate();
 
-  const categories = [
+  const [categories, setCategories] = useState([
     "Fútbol",
     "Básquet",
     "Tenis",
@@ -39,7 +51,9 @@ export const Editor: React.FC<{}> = () => {
     "Motociclismo",
     "Política Deportiva",
     "Historias del Gen Dominante",
-  ];
+  ]);
+
+  const authors = ["Nicolás Cravero", "Marcelo Calderón", "Depor3 Río Tercero"];
 
   const [formData, setFormData] = useState({
     title: "",
@@ -48,7 +62,7 @@ export const Editor: React.FC<{}> = () => {
     author: "",
     body: "",
     image: "",
-    multimedia: [""],
+    multimedia: [] as string[],
   });
 
   const handleChange = (field: string, value: string) => {
@@ -94,31 +108,70 @@ export const Editor: React.FC<{}> = () => {
     if (file) {
       const imageUrl = await handleImageUpload(file, false);
       if (imageUrl) {
-        const id = uuidv4();
-        setFormData((prev) => ({
-          ...prev,
-          multimedia: [...prev.multimedia, imageUrl],
-          body: `${prev.body}<div id="${id}" style="position: relative; display: inline-block; margin: 10px;">
-                  <img src="${imageUrl}" alt="" style="max-width: 100%; display: block; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);" />
-                </div>`,
-        }));
+        // const imageHtml = `<div style="display: block; width: 100%; text-align: center; padding: 5px;">
+        //   <a href="${imageUrl}" target="_blank" rel="noopener noreferrer">
+        //     <img src="${imageUrl}" alt="Imagen" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);" />
+        //   </a>
+        // </div>`;
+        const imageHtml = `
+        <div id="${id}" style="position: relative; display: inline-block; margin: 10px;">
+          <a href="${imageUrl}" target="_blank" rel="noopener noreferrer">
+            <img src="${imageUrl}" alt="" style="max-width: 100%; display: block; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);" />
+          </a>
+        </div>
+        `;
+        setFormData((prev) => ({ ...prev, body: `${prev.body}${imageHtml}` }));
       }
     }
   };
 
-  const handleFileSelect = (
+
+  const handleFileSelect = async (
     event: React.ChangeEvent<HTMLInputElement>,
     isMain: boolean
   ) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      handleImageUpload(file, isMain);
+    const files = event.target.files;
+    if (files) {
+      if (isMain) {
+        const file = files[0];
+        if (!file) return;
+  
+        const uploadedUrl = await handleImageUpload(file, true);
+        setFormData((prev) => ({
+          ...prev,
+          mainImage: uploadedUrl, // Ejemplo para imagen principal
+        }));
+      } else {
+        const existingUrls = formData.multimedia || []; // Verificar imágenes existentes
+        const newImageUrls: string[] = [];
+  
+        for (const file of Array.from(files)) {
+          const uploadedUrl = await handleImageUpload(file, false);
+          if (!existingUrls.includes(uploadedUrl)) {
+            // Agregar solo si no está duplicado
+            newImageUrls.push(uploadedUrl);
+          }
+        }
+  
+        setFormData((prev) => ({
+          ...prev,
+          multimedia: [...existingUrls, ...newImageUrls], // Combinar URLs existentes y nuevas
+        }));
+      }
     }
   };
+  
+  
 
   const handleSubmit = () => {
-    console.log("Datos enviados:", formData);
-    createNew(formData);
+    if (id) {
+      // Si existe ID, estamos editando
+      console.log("Editando noticia con ID:", id);
+      updateNew(id, formData);
+    } else {
+      console.log("Creando nueva noticia");
+      createNew(formData);
+    }
   };
 
   const handleSubmitBorrador = () => {
@@ -129,25 +182,52 @@ export const Editor: React.FC<{}> = () => {
     await handleSubmit();
   };
 
-  if (loadingNews) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
+  useEffect(() => {
+    if (id) {
+      // Si hay ID, obtener datos para edición
+      getNewById(id);
+    }
+    return () => resetCargaDatosState();
+  }, [id]);
+
+  useEffect(() => {
+    if (newDetail) {
+      setFormData({
+        ...formData,
+        title: newDetail.title,
+        description: newDetail.description,
+        category: newDetail.category,
+        author: newDetail.author,
+        body: newDetail.body,
+        image: newDetail.image,
+        multimedia: newDetail.multimedia,
+      });
+      setFormLoaded(true);
+    }
+  }, [newDetail]);
+
+  const handleCategoryAdd = (newCategory: string) => {
+    if (!categories.includes(newCategory)) {
+      setCategories((prev) => [...prev, newCategory]);
+    }
+  };
 
   return (
     <Container maxWidth="md" sx={{ mt: 8, mb: 2 }}>
+      {id && !formLoaded && (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      )}
       <Typography variant="h4" sx={{ mt: 2, mb: 2 }}>
-        Crear Nueva Noticia
+        {id ? "Editar Publicación" : "Crear Nueva Publicación"}
       </Typography>
       <Box component="form" noValidate autoComplete="off">
         <Grid container spacing={3}>
@@ -162,40 +242,56 @@ export const Editor: React.FC<{}> = () => {
           </Grid>
 
           {/* Descripción */}
-          <Grid item xs={12}>
+          {/* <Grid item xs={12}>
             <TextField
               fullWidth
               label="Descripción"
               value={formData.description}
               onChange={(e) => handleChange("description", e.target.value)}
             />
-          </Grid>
+          </Grid> */}
 
           {/* Categoría */}
           <Grid item xs={12}>
-            <TextField
-              select
-              fullWidth
-              label="Categoría"
+            <Autocomplete
+              freeSolo
+              options={categories} // Opciones existentes
               value={formData.category}
-              onChange={(e) => handleChange("category", e.target.value)}
-            >
-              {categories.map((category, index) => (
-                <MenuItem key={index} value={category}>
-                  {category}
-                </MenuItem>
-              ))}
-            </TextField>
+              onChange={(_event, newValue) => {
+                handleChange("category", newValue || "");
+                if (newValue && !categories.includes(newValue)) {
+                  handleCategoryAdd(newValue);
+                }
+              }}
+              onInputChange={(_event, newInputValue) => {
+                handleChange("category", newInputValue); // Manejar valor escrito
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  fullWidth
+                  label="Categoría"
+                  placeholder="Selecciona o escribe una categoría"
+                />
+              )}
+            />
           </Grid>
 
           {/* Autor */}
           <Grid item xs={12}>
             <TextField
+              select
               fullWidth
               label="Autor"
               value={formData.author}
               onChange={(e) => handleChange("author", e.target.value)}
-            />
+            >
+              {authors.map((author, index) => (
+                <MenuItem key={index} value={author}>
+                  {author}
+                </MenuItem>
+              ))}
+            </TextField>
           </Grid>
 
           {/* Imagen Principal */}
@@ -250,81 +346,42 @@ export const Editor: React.FC<{}> = () => {
             )}
           </Grid>
 
-          {/* Multimedia */}
-          <Grid item xs={12}>
-            <Typography variant="h6" gutterBottom>
-              Multimedia
-            </Typography>
-            <Button variant="contained" component="label">
-              Subir Imágenes Secundarias
-              <input
-                type="file"
-                hidden
-                accept="image/*"
-                onChange={(e) => handleFileSelect(e, false)}
-              />
-            </Button>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 2 }}>
-              {formData.multimedia.map((url, index) => (
-                <Box
-                  key={index}
-                  sx={{ textAlign: "center", position: "relative" }}
-                >
-                  <Typography variant="body2" sx={{ mb: 1 }}>
-                    Imagen {index + 1}
-                  </Typography>
-                  <a href={url} target="_blank" rel="noopener noreferrer">
-                    <img
-                      src={url}
-                      alt={`Vista previa ${index + 1}`}
-                      style={{
-                        maxWidth: "150px",
-                        maxHeight: "150px",
-                        cursor: "pointer",
-                        borderRadius: "8px",
-                        boxShadow: "0 2px 5px rgba(0, 0, 0, 0.2)",
-                      }}
-                    />
-                  </a>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    size="small"
-                    sx={{ position: "absolute", top: 5, right: 5 }}
-                    onClick={() =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        multimedia: prev.multimedia.filter(
-                          (_, i) => i !== index
-                        ),
-                      }))
-                    }
-                  >
-                    Eliminar
-                  </Button>
-                </Box>
-              ))}
-            </Box>
-          </Grid>
-
           {/* Cuerpo de la noticia */}
           <Grid item xs={12}>
             <Typography variant="h6" gutterBottom>
               Cuerpo de la Noticia
             </Typography>
             <ReactQuill
+              ref={quillRef}
               value={formData.body}
               onChange={(value) => handleChange("body", value)}
               theme="snow"
               placeholder="Escribe aquí el contenido de la noticia..."
+              className="custom-editor"
               style={{
-                height: "300px",
+                height: "500px",
+                width: "100%",
                 marginBottom: "20px",
                 backgroundColor: "white",
                 color: "black",
               }}
             />
-            <Button variant="contained" component="label" sx={{ mt: 2 }}>
+            <style>
+              {`
+          .ql-editor img {
+            display: inline-block;
+            width: 50%;
+            vertical-align: top;
+            padding: 5px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+          }
+          .ql-editor div {
+            box-sizing: border-box;
+          }
+        `}
+            </style>
+            <Button variant="contained" component="label" sx={{ m: 2 }}>
               Insertar Imagen
               <input
                 type="file"
@@ -333,7 +390,74 @@ export const Editor: React.FC<{}> = () => {
                 onChange={handleInsertImage}
               />
             </Button>
+            {/* <Button variant="contained" component="label">
+              Galería
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                multiple // Permitir selección de múltiples imágenes
+                onChange={handleGalleryUpload}
+              />
+            </Button> */}
           </Grid>
+
+          {/* Multimedia */}
+          <Grid item xs={12}>
+            <Button variant="contained" component="label">
+              Galería de fotos
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                multiple // Permitir múltiples selecciones
+                onChange={(e) => handleFileSelect(e, false)}
+              />
+            </Button>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 2 }}>
+              {formData.multimedia &&
+                formData.multimedia.map((url, index) => (
+                  <Box
+                    key={index}
+                    sx={{ textAlign: "center", position: "relative" }}
+                  >
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      Imagen {index + 1}
+                    </Typography>
+                    <a href={url} target="_blank" rel="noopener noreferrer">
+                      <img
+                        src={url}
+                        alt={`Vista previa ${index + 1}`}
+                        style={{
+                          maxWidth: "150px",
+                          maxHeight: "150px",
+                          cursor: "pointer",
+                          borderRadius: "8px",
+                          boxShadow: "0 2px 5px rgba(0, 0, 0, 0.2)",
+                        }}
+                      />
+                    </a>
+                    <Button
+                      variant="contained"
+                      color="error"
+                      size="small"
+                      sx={{ position: "absolute", top: 5, right: 5 }}
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          multimedia: prev.multimedia.filter(
+                            (_, i) => i !== index
+                          ),
+                        }))
+                      }
+                    >
+                      Eliminar
+                    </Button>
+                  </Box>
+                ))}
+            </Box>
+          </Grid>
+
           {/* <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 2 }}>
               {formData.multimedia.map((url, index) => (
                 <Box
@@ -385,7 +509,7 @@ export const Editor: React.FC<{}> = () => {
               onClick={handleSubmit}
               sx={{ mt: 3 }}
             >
-              Publicar Noticia
+              {id ? "Guardar Cambios" : "Publicar Noticia"}
             </Button>
           </Grid>
           <Grid item xs={12}>
@@ -409,7 +533,9 @@ export const Editor: React.FC<{}> = () => {
         </DialogContent>
         <DialogActions>
           <Button
-            onClick={() => navigate("/")}
+            onClick={() => {
+              navigate("/");
+            }}
             color="primary"
             variant="contained"
           >
@@ -419,7 +545,7 @@ export const Editor: React.FC<{}> = () => {
       </Dialog>
 
       {/* Diálogo de error */}
-      <Dialog open={errorCreateNew} onClose={() => {}}>
+      <Dialog open={errorCreateNew} onClose={() => navigate("/")}>
         <DialogTitle>Error</DialogTitle>
         <DialogContent>
           <DialogContentText>
