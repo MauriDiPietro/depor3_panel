@@ -161,7 +161,7 @@ export const NewsList = () => {
         </Box>
       )}
       {/* Diálogo de éxito */}
-      <Dialog open={newDeleted} onClose={() => navigate("/")}>
+      <Dialog open={newDeleted} closeAfterTransition onClose={() => navigate("/")}>
         <DialogTitle>Publicación eliminada</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -170,9 +170,7 @@ export const NewsList = () => {
         </DialogContent>
         <DialogActions>
           <Button
-            onClick={() => {
-              navigate("/");
-            }}
+            onClick={() => navigate("/")}
             color="primary"
             variant="contained"
           >

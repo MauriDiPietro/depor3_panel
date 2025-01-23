@@ -25,12 +25,16 @@ export const Editor: React.FC<{}> = () => {
   const { id } = useParams<{ id: string }>();
 
   const createNew = useGlobalStore((state) => state.createNew);
+  const createDraft = useGlobalStore((state) => state.createDraft);
   const getNewById = useGlobalStore((state) => state.getNewById); // Función para obtener noticia
   const updateNew = useGlobalStore((state) => state.updateNew);
   const newDetail = useGlobalStore((state) => state.new);
 
   // const loadingNews = useGlobalStore((state) => state.loadingNews);
   const newCreated = useGlobalStore((state) => state.newCreated);
+  const draftCreated = useGlobalStore((state) => state.draftCreated);
+  const errorCreateDraft = useGlobalStore((state) => state.errorCreateDraft);
+
   const resetCargaDatosState = useGlobalStore(
     (state) => state.resetCargaDatosState
   );
@@ -42,15 +46,35 @@ export const Editor: React.FC<{}> = () => {
   const navigate = useNavigate();
 
   const [categories, setCategories] = useState([
-    "Fútbol",
-    "Básquet",
-    "Tenis",
-    "Handball",
+    "Ajedrez",
+    "Arquería",
+    "Arte y deporte",
+    "Artes marciales",
+    "Artes marciales mixtas",
+    "Atletismo",
     "Automovilismo",
+    "BMX",
+    "Básquet",
+    "Bochas",
+    "Boxeo",
+    "Cestoball",
+    "Ciclismo",
+    "Deporte adaptado",
+    "Deportes ecuestres",
+    "Deportes náuticos",
     "Deporte Motor",
-    "Motociclismo",
-    "Política Deportiva",
+    "Efemérides",
+    "Footgolf",
+    "Fútbol",
+    "Fútbol femenino",
+    "Golf",
+    "Hockey",
+    "Handball",
     "Historias del Gen Dominante",
+    "Motociclismo",
+    "Opinión",
+    "Política Deportiva",
+    "Tenis",
   ]);
 
   const authors = ["Nicolás Cravero", "Marcelo Calderón", "Depor3 Río Tercero"];
@@ -125,7 +149,6 @@ export const Editor: React.FC<{}> = () => {
     }
   };
 
-
   const handleFileSelect = async (
     event: React.ChangeEvent<HTMLInputElement>,
     isMain: boolean
@@ -135,7 +158,7 @@ export const Editor: React.FC<{}> = () => {
       if (isMain) {
         const file = files[0];
         if (!file) return;
-  
+
         const uploadedUrl = await handleImageUpload(file, true);
         setFormData((prev) => ({
           ...prev,
@@ -144,7 +167,7 @@ export const Editor: React.FC<{}> = () => {
       } else {
         const existingUrls = formData.multimedia || []; // Verificar imágenes existentes
         const newImageUrls: string[] = [];
-  
+
         for (const file of Array.from(files)) {
           const uploadedUrl = await handleImageUpload(file, false);
           if (!existingUrls.includes(uploadedUrl)) {
@@ -152,7 +175,7 @@ export const Editor: React.FC<{}> = () => {
             newImageUrls.push(uploadedUrl);
           }
         }
-  
+
         setFormData((prev) => ({
           ...prev,
           multimedia: [...existingUrls, ...newImageUrls], // Combinar URLs existentes y nuevas
@@ -160,8 +183,6 @@ export const Editor: React.FC<{}> = () => {
       }
     }
   };
-  
-  
 
   const handleSubmit = () => {
     if (id) {
@@ -176,6 +197,7 @@ export const Editor: React.FC<{}> = () => {
 
   const handleSubmitBorrador = () => {
     console.log("Datos enviados:", formData);
+    createDraft(formData);
   };
 
   const handleRetry = async () => {
@@ -508,9 +530,35 @@ export const Editor: React.FC<{}> = () => {
               fullWidth
               onClick={handleSubmit}
               sx={{ mt: 3 }}
+              disabled={
+                !formData.image ||
+                !formData.title ||
+                !formData.body ||
+                !formData.author
+              }
             >
               {id ? "Guardar Cambios" : "Publicar Noticia"}
             </Button>
+            {!formData.image && (
+              <Typography display="block" variant="overline" color="red">
+                Falta cargar la imagen principal
+              </Typography>
+            )}
+            {!formData.title && (
+              <Typography display="block" variant="overline" color="red">
+                Falta cargar el título
+              </Typography>
+            )}
+            {!formData.body && (
+              <Typography display="block" variant="overline" color="red">
+                Falta cargar el cuerpo de la noticia
+              </Typography>
+            )}
+            {!formData.author && (
+              <Typography display="block" variant="overline" color="red">
+                Falta cargar el autor
+              </Typography>
+            )}
           </Grid>
           <Grid item xs={12}>
             <Button
@@ -550,6 +598,39 @@ export const Editor: React.FC<{}> = () => {
         <DialogContent>
           <DialogContentText>
             Ocurrió un error al crear la publicación.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleRetry} color="error" variant="contained">
+            Reintentar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={draftCreated} onClose={() => navigate("/")}>
+        <DialogTitle>Borrador creado</DialogTitle>
+        <DialogContent>
+          <DialogContentText>Borrador creado con éxito. Se descargó el archivo. ✔</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              navigate("/");
+            }}
+            color="primary"
+            variant="contained"
+          >
+            Aceptar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Diálogo de error */}
+      <Dialog open={errorCreateDraft} onClose={() => navigate("/")}>
+        <DialogTitle>Error</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Ocurrió un error al generar borrador.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

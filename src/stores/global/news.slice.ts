@@ -1,6 +1,7 @@
 import { StateCreator } from "zustand";
 import { New } from "../../types/new.type";
 import NewsService from "../../lib/services/news.service";
+import { saveAs } from "file-saver";
 
 export interface NewsState {
   news: New[] | [];
@@ -12,6 +13,8 @@ export interface NewsState {
   newDeleted: boolean;
   errorCreateNew: boolean;
   errorDeleteNew: boolean;
+  draftCreated: boolean;
+  errorCreateDraft: boolean;
 }
 
 export interface NewsActions {
@@ -125,9 +128,11 @@ const initialState: NewsState = {
   errorDeleteNew: false,
   newCreated: false,
   errorCreateNew: false,
+  draftCreated: false,
+  errorCreateDraft: false,
 };
 
-export const createNewsSlice: StateCreator<NewsSlice> = (set) => ({
+export const createNewsSlice: StateCreator<NewsSlice> = (set, get) => ({
   ...initialState,
   resetCargaDatosState: () => set({ ...initialState }),
   getAllNews: async () => {
@@ -169,12 +174,16 @@ export const createNewsSlice: StateCreator<NewsSlice> = (set) => ({
   createNew: async (body: New) => {
     set({ loadingNews: true });
     try {
+      localStorage.setItem("publicacion", JSON.stringify(body));
       const response = await NewsService.createNew(body);
       if (!response) throw new Error("Error al registrar noticia");
       set({ newCreated: true });
     } catch (error) {
-      set({ errorDeleteNew: true });
+      const blob = new Blob([JSON.stringify(body, null, 2)], { type: "application/json" });
+      saveAs(blob, "publicacion.json");
+      set({ errorCreateNew: true });
     } finally {
+      if(get().newCreated) localStorage.removeItem("publicacion");
       set({ loadingNews: false });
     }
   },
@@ -193,11 +202,13 @@ export const createNewsSlice: StateCreator<NewsSlice> = (set) => ({
   createDraft: async (body: New) => {
     set({ loadingNews: true });
     try {
-      const response = await NewsService.createDraft(body);
-      if (!response) throw new Error("Error al registrar noticia");
-      set({ newCreated: true });
+      const blob = new Blob([JSON.stringify(body, null, 2)], { type: "application/json" });
+      saveAs(blob, "publicacion.json");
+      // const response = await NewsService.createDraft(body);
+      // if (!response) throw new Error("Error al registrar noticia");
+      set({ draftCreated: true });
     } catch (error) {
-      set({ errorCreateNew: true });
+      set({ errorCreateDraft: true });
     } finally {
       set({ loadingNews: false });
     }
