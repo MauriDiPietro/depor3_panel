@@ -202,12 +202,14 @@ export const createNewsSlice: StateCreator<NewsSlice> = (set, get) => ({
   createDraft: async (body: New) => {
     set({ loadingNews: true });
     try {
-      const blob = new Blob([JSON.stringify(body, null, 2)], { type: "application/json" });
-      saveAs(blob, "publicacion.json");
       // const response = await NewsService.createDraft(body);
       // if (!response) throw new Error("Error al registrar noticia");
-      set({ draftCreated: true });
+      const response = await NewsService.createNew({...body, active: false});
+      if (!response) throw new Error("Error al registrar borrador");
+      if (response) set({ draftCreated: true });
     } catch (error) {
+      const blob = new Blob([JSON.stringify(body, null, 2)], { type: "application/json" });
+      saveAs(blob, "publicacion.json");
       set({ errorCreateDraft: true });
     } finally {
       set({ loadingNews: false });

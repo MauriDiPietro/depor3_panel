@@ -9,13 +9,15 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { New } from "../../../types/new.type";
 import { useGlobalStore } from "../../../stores/global";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const normalizeDate = (dateStr: string | undefined): string | null => {
   if (!dateStr) return null;
@@ -70,9 +72,18 @@ export const NewsList = () => {
 
   const news = useGlobalStore((state) => state.news);
 
+  const [tabValue, setTabValue] = useState(0);
+
+  const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
+  const publishedNews = news.filter((noticia: New) => noticia.active);
+  const draftNews = news.filter((noticia: New) => !noticia.active);
+
   return (
     <Box sx={{ width: "100%", mt: 9, px: 2 }}>
-      <Box
+       <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
@@ -95,7 +106,11 @@ export const NewsList = () => {
         >
           Nueva Publicación
         </Button>
-      </Box>
+      </Box> 
+      <Tabs value={tabValue} onChange={handleChange} aria-label="news tabs">
+        <Tab label="Publicadas" />
+        <Tab label="Borradores" />
+      </Tabs>
       {loadingNews ? (
         <Box
           sx={{
@@ -108,60 +123,113 @@ export const NewsList = () => {
           <CircularProgress />
         </Box>
       ) : (
+        // <Box sx={{ width: "100%" }}>
+        //   {news &&
+        //     news
+        //       .filter((noticia: New) => noticia.active)
+        //       .sort((a: New, b: New) => {
+        //         const dateA = parseDateToSort(a.date);
+        //         const dateB = parseDateToSort(b.date);
+
+        //         if (!dateA || !dateB) return 0; // Manejar fechas nulas
+
+        //         return dateB.getTime() - dateA.getTime(); // Orden descendente
+        //       })
+              // .map((noticia: New, index: number) => (
+              //   <Box
+              //     key={index}
+              //     sx={{
+              //       display: "flex",
+              //       justifyContent: "space-between",
+              //       alignItems: "center",
+              //       borderBottom: "1px solid #e0e0e0",
+              //       py: 2,
+              //     }}
+              //   >
+              //     <Typography variant="h6" sx={{ flex: 1, textAlign: "left" }}>
+              //       {noticia.title}
+              //     </Typography>
+
+              //     <Typography
+              //       variant="h6"
+              //       sx={{ flex: 1, textAlign: "center" }}
+              //     >
+              //       {normalizeDate(noticia.date)}{" "}
+              //       {/* Mostrar fecha normalizada */}
+              //     </Typography>
+              //     <Box sx={{ display: "flex", gap: 1 }}>
+              //       <IconButton
+              //         color="primary"
+              //         onClick={() => handleEdit(noticia._id)}
+              //       >
+              //         <EditIcon />
+              //       </IconButton>
+              //       <IconButton
+              //         color="secondary"
+              //         onClick={() => handleDelete(noticia._id as string)}
+              //       >
+              //         <DeleteIcon />
+              //       </IconButton>
+              //     </Box>
+              //   </Box>
+              // ))}
+        // </Box>
         <Box sx={{ width: "100%" }}>
-          {news &&
-            news
-              .filter((noticia: New) => noticia.active)
-              .sort((a: New, b: New) => {
-                const dateA = parseDateToSort(a.date);
-                const dateB = parseDateToSort(b.date);
+          {(tabValue === 0 ? publishedNews : draftNews)
+            .sort((a: New, b: New) => {
+              const dateA = parseDateToSort(a.date);
+              const dateB = parseDateToSort(b.date);
 
-                if (!dateA || !dateB) return 0; // Manejar fechas nulas
+              if (!dateA || !dateB) return 0; // Manejar fechas nulas
 
-                return dateB.getTime() - dateA.getTime(); // Orden descendente
-              })
-              .map((noticia: New, index: number) => (
-                <Box
-                  key={index}
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    borderBottom: "1px solid #e0e0e0",
-                    py: 2,
-                  }}
+              return dateB.getTime() - dateA.getTime(); // Orden descendente
+            })
+            .map((noticia: New, index: number) => (
+              <Box
+                key={index}
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  borderBottom: "1px solid #e0e0e0",
+                  py: 2,
+                }}
+              >
+                <Typography variant="h6" sx={{ flex: 1, textAlign: "left" }}>
+                  {noticia.title}
+                </Typography>
+
+                <Typography
+                  variant="h6"
+                  sx={{ flex: 1, textAlign: "center" }}
                 >
-                  <Typography variant="h6" sx={{ flex: 1, textAlign: "left" }}>
-                    {noticia.title}
-                  </Typography>
-
-                  <Typography
-                    variant="h6"
-                    sx={{ flex: 1, textAlign: "center" }}
+                  {normalizeDate(noticia.date)}{" "}
+                  {/* Mostrar fecha normalizada */}
+                </Typography>
+                <Box sx={{ display: "flex", gap: 1 }}>
+                  <IconButton
+                    color="primary"
+                    onClick={() => handleEdit(noticia._id)}
                   >
-                    {normalizeDate(noticia.date)}{" "}
-                    {/* Mostrar fecha normalizada */}
-                  </Typography>
-                  <Box sx={{ display: "flex", gap: 1 }}>
-                    <IconButton
-                      color="primary"
-                      onClick={() => handleEdit(noticia._id)}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      color="secondary"
-                      onClick={() => handleDelete(noticia._id as string)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Box>
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton
+                    color="secondary"
+                    onClick={() => handleDelete(noticia._id as string)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
                 </Box>
-              ))}
+              </Box>
+            ))}
         </Box>
       )}
       {/* Diálogo de éxito */}
-      <Dialog open={newDeleted} closeAfterTransition onClose={() => navigate("/")}>
+      <Dialog
+        open={newDeleted}
+        closeAfterTransition
+        onClose={() => navigate("/")}
+      >
         <DialogTitle>Publicación eliminada</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -180,15 +248,16 @@ export const NewsList = () => {
       </Dialog>
 
       {/* Diálogo de error */}
-      <Dialog open={errorDeleteNew} onClose={() => navigate('/')}>
+      <Dialog open={errorDeleteNew} onClose={() => navigate("/")}>
         <DialogTitle>Error</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Ocurrió un error al eliminar la publicación. Intente nuevamwnte más tarde.
+            Ocurrió un error al eliminar la publicación. Intente nuevamwnte más
+            tarde.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-        <Button
+          <Button
             onClick={() => {
               navigate("/");
             }}
