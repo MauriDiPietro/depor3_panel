@@ -11,6 +11,7 @@ import {
   DialogActions,
   Tabs,
   Tab,
+  Pagination,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -49,13 +50,24 @@ const parseDateToSort = (dateStr: string | undefined): Date | null => {
 
 export const NewsList = () => {
   const getAllNews = useGlobalStore((state) => state.getAllNews);
+  const count = useGlobalStore((state) => state.count);
   const deleteNewById = useGlobalStore((state) => state.deleteNewById);
   const loadingNews = useGlobalStore((state) => state.loadingNews);
   const newDeleted = useGlobalStore((state) => state.newDeleted);
   const errorDeleteNew = useGlobalStore((state) => state.errorDeleteNew);
+  const totalPages = useGlobalStore((state) => state.totalPages);
+
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const itemsPerPage = count;
+
+  const handlePageChange = (_event, value) => {
+    setCurrentPage(value);
+    getAllNews(value, itemsPerPage);
+  };
 
   useEffect(() => {
-    getAllNews();
+    getAllNews(1, itemsPerPage);
   }, []);
 
   const navigate = useNavigate();
@@ -83,7 +95,7 @@ export const NewsList = () => {
 
   return (
     <Box sx={{ width: "100%", mt: 9, px: 2 }}>
-       <Box
+      <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
@@ -106,7 +118,7 @@ export const NewsList = () => {
         >
           Nueva Publicación
         </Button>
-      </Box> 
+      </Box>
       <Tabs value={tabValue} onChange={handleChange} aria-label="news tabs">
         <Tab label="Publicadas" />
         <Tab label="Borradores" />
@@ -135,44 +147,44 @@ export const NewsList = () => {
 
         //         return dateB.getTime() - dateA.getTime(); // Orden descendente
         //       })
-              // .map((noticia: New, index: number) => (
-              //   <Box
-              //     key={index}
-              //     sx={{
-              //       display: "flex",
-              //       justifyContent: "space-between",
-              //       alignItems: "center",
-              //       borderBottom: "1px solid #e0e0e0",
-              //       py: 2,
-              //     }}
-              //   >
-              //     <Typography variant="h6" sx={{ flex: 1, textAlign: "left" }}>
-              //       {noticia.title}
-              //     </Typography>
+        // .map((noticia: New, index: number) => (
+        //   <Box
+        //     key={index}
+        //     sx={{
+        //       display: "flex",
+        //       justifyContent: "space-between",
+        //       alignItems: "center",
+        //       borderBottom: "1px solid #e0e0e0",
+        //       py: 2,
+        //     }}
+        //   >
+        //     <Typography variant="h6" sx={{ flex: 1, textAlign: "left" }}>
+        //       {noticia.title}
+        //     </Typography>
 
-              //     <Typography
-              //       variant="h6"
-              //       sx={{ flex: 1, textAlign: "center" }}
-              //     >
-              //       {normalizeDate(noticia.date)}{" "}
-              //       {/* Mostrar fecha normalizada */}
-              //     </Typography>
-              //     <Box sx={{ display: "flex", gap: 1 }}>
-              //       <IconButton
-              //         color="primary"
-              //         onClick={() => handleEdit(noticia._id)}
-              //       >
-              //         <EditIcon />
-              //       </IconButton>
-              //       <IconButton
-              //         color="secondary"
-              //         onClick={() => handleDelete(noticia._id as string)}
-              //       >
-              //         <DeleteIcon />
-              //       </IconButton>
-              //     </Box>
-              //   </Box>
-              // ))}
+        //     <Typography
+        //       variant="h6"
+        //       sx={{ flex: 1, textAlign: "center" }}
+        //     >
+        //       {normalizeDate(noticia.date)}{" "}
+        //       {/* Mostrar fecha normalizada */}
+        //     </Typography>
+        //     <Box sx={{ display: "flex", gap: 1 }}>
+        //       <IconButton
+        //         color="primary"
+        //         onClick={() => handleEdit(noticia._id)}
+        //       >
+        //         <EditIcon />
+        //       </IconButton>
+        //       <IconButton
+        //         color="secondary"
+        //         onClick={() => handleDelete(noticia._id as string)}
+        //       >
+        //         <DeleteIcon />
+        //       </IconButton>
+        //     </Box>
+        //   </Box>
+        // ))}
         // </Box>
         <Box sx={{ width: "100%" }}>
           {(tabValue === 0 ? publishedNews : draftNews)
@@ -199,10 +211,7 @@ export const NewsList = () => {
                   {noticia.title}
                 </Typography>
 
-                <Typography
-                  variant="h6"
-                  sx={{ flex: 1, textAlign: "center" }}
-                >
+                <Typography variant="h6" sx={{ flex: 1, textAlign: "center" }}>
                   {normalizeDate(noticia.date)}{" "}
                   {/* Mostrar fecha normalizada */}
                 </Typography>
@@ -222,6 +231,15 @@ export const NewsList = () => {
                 </Box>
               </Box>
             ))}
+          {/* Paginado */}
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+            <Pagination
+              count={totalPages}
+              page={currentPage}
+              onChange={handlePageChange}
+              color="primary"
+            />
+          </Box>
         </Box>
       )}
       {/* Diálogo de éxito */}
