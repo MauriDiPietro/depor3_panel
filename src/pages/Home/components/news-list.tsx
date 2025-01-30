@@ -20,37 +20,47 @@ import { useGlobalStore } from "../../../stores/global";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
-const normalizeDate = (dateStr: string | undefined): string | null => {
-  if (!dateStr) return null;
+// const normalizeDate = (dateStr: string | undefined): string | null => {
+//   if (!dateStr) return null;
 
-  // Detectar formato m/dd/aaaa o dd/mm/aaaa
-  const isMDY = /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr);
+//   // Detectar formato m/dd/aaaa o dd/mm/aaaa
+//   const isMDY = /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr);
 
-  if (isMDY) {
-    const [month, day, year] = dateStr.split("/");
-    // Verificar si es un caso claro de m/dd/aaaa (día > 12 no tiene sentido como mes)
-    if (parseInt(day) > 12) {
-      return `${day}/${month}/${year}`; // Convertir a dd/mm/aaaa
-    }
-    return dateStr; // Dejarlo igual si ya es válido como dd/mm/aaaa
-  }
+//   if (isMDY) {
+//     const [month, day, year] = dateStr.split("/");
+//     // Verificar si es un caso claro de m/dd/aaaa (día > 12 no tiene sentido como mes)
+//     if (parseInt(day) > 12) {
+//       return `${day}/${month}/${year}`; // Convertir a dd/mm/aaaa
+//     }
+//     return dateStr; // Dejarlo igual si ya es válido como dd/mm/aaaa
+//   }
 
-  return dateStr; // Asumir que ya está en dd/mm/aaaa
+//   return dateStr; // Asumir que ya está en dd/mm/aaaa
+// };
+
+// const parseDateToSort = (dateStr: string | undefined): Date | null => {
+//   if (!dateStr) return null;
+
+//   const normalizedDate = normalizeDate(dateStr);
+//   if (!normalizedDate) return null;
+
+//   const [day, month, year] = normalizedDate.split("/");
+//   return new Date(`${year}-${month}-${day}`);
+// };
+
+const formatDate = (date: string | Date | undefined): string => {
+  if (!date) return "Fecha no disponible";
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  }).format(new Date(date)); // "29/01/2025"
 };
 
-const parseDateToSort = (dateStr: string | undefined): Date | null => {
-  if (!dateStr) return null;
-
-  const normalizedDate = normalizeDate(dateStr);
-  if (!normalizedDate) return null;
-
-  const [day, month, year] = normalizedDate.split("/");
-  return new Date(`${year}-${month}-${day}`);
-};
 
 export const NewsList = () => {
   const getAllNews = useGlobalStore((state) => state.getAllNews);
-  const count = useGlobalStore((state) => state.count);
+  // const count = useGlobalStore((state) => state.count);
   const deleteNewById = useGlobalStore((state) => state.deleteNewById);
   const loadingNews = useGlobalStore((state) => state.loadingNews);
   const newDeleted = useGlobalStore((state) => state.newDeleted);
@@ -59,7 +69,7 @@ export const NewsList = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
 
-  const itemsPerPage = count;
+  const itemsPerPage = 10;
 
   const handlePageChange = (_event, value) => {
     setCurrentPage(value);
@@ -188,14 +198,14 @@ export const NewsList = () => {
         // </Box>
         <Box sx={{ width: "100%" }}>
           {(tabValue === 0 ? publishedNews : draftNews)
-            .sort((a: New, b: New) => {
-              const dateA = parseDateToSort(a.date);
-              const dateB = parseDateToSort(b.date);
+            // .sort((a: New, b: New) => {
+            //   const dateA = parseDateToSort(a.date);
+            //   const dateB = parseDateToSort(b.date);
 
-              if (!dateA || !dateB) return 0; // Manejar fechas nulas
+            //   if (!dateA || !dateB) return 0; // Manejar fechas nulas
 
-              return dateB.getTime() - dateA.getTime(); // Orden descendente
-            })
+            //   return dateB.getTime() - dateA.getTime(); // Orden descendente
+            // })
             .map((noticia: New, index: number) => (
               <Box
                 key={index}
@@ -212,7 +222,7 @@ export const NewsList = () => {
                 </Typography>
 
                 <Typography variant="h6" sx={{ flex: 1, textAlign: "center" }}>
-                  {normalizeDate(noticia.date)}{" "}
+                  {formatDate(noticia.date)}{" "}
                   {/* Mostrar fecha normalizada */}
                 </Typography>
                 <Box sx={{ display: "flex", gap: 1 }}>
