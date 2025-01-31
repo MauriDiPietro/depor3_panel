@@ -30,8 +30,14 @@ export const Editor: React.FC<{}> = () => {
   const updateNew = useGlobalStore((state) => state.updateNew);
   const newDetail = useGlobalStore((state) => state.new);
 
+  const edicion = useGlobalStore((state) => state.edicion);
+  const setEdicion = useGlobalStore((state) => state.setEdicion);
+
+
   // const loadingNews = useGlobalStore((state) => state.loadingNews);
   const newCreated = useGlobalStore((state) => state.newCreated);
+  const newModified = useGlobalStore((state) => state.newModified);
+
   const draftCreated = useGlobalStore((state) => state.draftCreated);
   const errorCreateDraft = useGlobalStore((state) => state.errorCreateDraft);
 
@@ -185,7 +191,7 @@ export const Editor: React.FC<{}> = () => {
   };
 
   const handleSubmit = () => {
-    if (id) {
+    if (edicion && id) {
       // Si existe ID, estamos editando
       console.log("Editando noticia con ID:", id);
       updateNew(id, formData);
@@ -197,7 +203,13 @@ export const Editor: React.FC<{}> = () => {
 
   const handleSubmitBorrador = () => {
     console.log("Datos enviados:", formData);
-    createDraft(formData);
+    if (edicion && id) {
+      // Si existe ID, estamos editando
+      console.log("Editando noticia con ID:", id);
+      updateNew(id, formData);
+    } else {
+      createDraft(formData);
+    }
   };
 
   const handleRetry = async () => {
@@ -208,6 +220,7 @@ export const Editor: React.FC<{}> = () => {
     if (id) {
       // Si hay ID, obtener datos para edición
       getNewById(id);
+      setEdicion(true);
     }
     return () => resetCargaDatosState();
   }, [id]);
@@ -537,7 +550,7 @@ export const Editor: React.FC<{}> = () => {
                 !formData.author
               }
             >
-              {id ? "Guardar Cambios" : "Publicar Noticia"}
+              {id ? "Guardar y Publicar" : "Publicar Noticia"}
             </Button>
             {!formData.image && (
               <Typography display="block" variant="overline" color="red">
@@ -578,6 +591,25 @@ export const Editor: React.FC<{}> = () => {
         <DialogTitle>Publicación creada</DialogTitle>
         <DialogContent>
           <DialogContentText>Publicación creada con éxito. ✔</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              navigate("/");
+            }}
+            color="primary"
+            variant="contained"
+          >
+            Aceptar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Diálogo de éxito */}
+      <Dialog open={newModified} onClose={() => navigate("/")}>
+        <DialogTitle>Publicación actualizada</DialogTitle>
+        <DialogContent>
+          <DialogContentText>Publicación actualizada con éxito. ✔</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button

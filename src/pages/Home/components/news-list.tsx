@@ -14,39 +14,11 @@ import {
   Pagination,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
+// import DeleteIcon from "@mui/icons-material/Delete";
 import { New } from "../../../types/new.type";
 import { useGlobalStore } from "../../../stores/global";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-
-// const normalizeDate = (dateStr: string | undefined): string | null => {
-//   if (!dateStr) return null;
-
-//   // Detectar formato m/dd/aaaa o dd/mm/aaaa
-//   const isMDY = /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr);
-
-//   if (isMDY) {
-//     const [month, day, year] = dateStr.split("/");
-//     // Verificar si es un caso claro de m/dd/aaaa (día > 12 no tiene sentido como mes)
-//     if (parseInt(day) > 12) {
-//       return `${day}/${month}/${year}`; // Convertir a dd/mm/aaaa
-//     }
-//     return dateStr; // Dejarlo igual si ya es válido como dd/mm/aaaa
-//   }
-
-//   return dateStr; // Asumir que ya está en dd/mm/aaaa
-// };
-
-// const parseDateToSort = (dateStr: string | undefined): Date | null => {
-//   if (!dateStr) return null;
-
-//   const normalizedDate = normalizeDate(dateStr);
-//   if (!normalizedDate) return null;
-
-//   const [day, month, year] = normalizedDate.split("/");
-//   return new Date(`${year}-${month}-${day}`);
-// };
 
 const formatDate = (date: string | Date | undefined): string => {
   if (!date) return "Fecha no disponible";
@@ -91,10 +63,10 @@ export const NewsList = () => {
     window.open(`https://www.depor3.com/news/${id}`, "_blank");
   };
 
-  const handleDelete = (id: string) => {
-    console.log(`Delete news with ID: ${id}`);
-    deleteNewById(id);
-  };
+  // const handleDelete = (id: string) => {
+  //   console.log(`Delete news with ID: ${id}`);
+  //   deleteNewById(id);
+  // };
 
   const news = useGlobalStore((state) => state.news);
 
@@ -149,67 +121,8 @@ export const NewsList = () => {
           <CircularProgress />
         </Box>
       ) : (
-        // <Box sx={{ width: "100%" }}>
-        //   {news &&
-        //     news
-        //       .filter((noticia: New) => noticia.active)
-        //       .sort((a: New, b: New) => {
-        //         const dateA = parseDateToSort(a.date);
-        //         const dateB = parseDateToSort(b.date);
-
-        //         if (!dateA || !dateB) return 0; // Manejar fechas nulas
-
-        //         return dateB.getTime() - dateA.getTime(); // Orden descendente
-        //       })
-        // .map((noticia: New, index: number) => (
-        //   <Box
-        //     key={index}
-        //     sx={{
-        //       display: "flex",
-        //       justifyContent: "space-between",
-        //       alignItems: "center",
-        //       borderBottom: "1px solid #e0e0e0",
-        //       py: 2,
-        //     }}
-        //   >
-        //     <Typography variant="h6" sx={{ flex: 1, textAlign: "left" }}>
-        //       {noticia.title}
-        //     </Typography>
-
-        //     <Typography
-        //       variant="h6"
-        //       sx={{ flex: 1, textAlign: "center" }}
-        //     >
-        //       {normalizeDate(noticia.date)}{" "}
-        //       {/* Mostrar fecha normalizada */}
-        //     </Typography>
-        //     <Box sx={{ display: "flex", gap: 1 }}>
-        //       <IconButton
-        //         color="primary"
-        //         onClick={() => handleEdit(noticia._id)}
-        //       >
-        //         <EditIcon />
-        //       </IconButton>
-        //       <IconButton
-        //         color="secondary"
-        //         onClick={() => handleDelete(noticia._id as string)}
-        //       >
-        //         <DeleteIcon />
-        //       </IconButton>
-        //     </Box>
-        //   </Box>
-        // ))}
-        // </Box>
         <Box sx={{ width: "100%" }}>
           {(tabValue === 0 ? publishedNews : draftNews)
-            // .sort((a: New, b: New) => {
-            //   const dateA = parseDateToSort(a.date);
-            //   const dateB = parseDateToSort(b.date);
-
-            //   if (!dateA || !dateB) return 0; // Manejar fechas nulas
-
-            //   return dateB.getTime() - dateA.getTime(); // Orden descendente
-            // })
             .map((noticia: New, index: number) => (
               <Box
                 key={index}
@@ -236,12 +149,12 @@ export const NewsList = () => {
                   >
                     <EditIcon />
                   </IconButton>
-                  <IconButton
+                  {/* <IconButton
                     color="secondary"
                     onClick={() => handleDelete(noticia._id as string)}
                   >
                     <DeleteIcon />
-                  </IconButton>
+                  </IconButton> */}
                   {!noticia.active && (
                     <IconButton
                       color="primary"

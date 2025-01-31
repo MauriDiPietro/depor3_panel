@@ -18,6 +18,8 @@ export interface NewsState {
   totalPages: number;
   currentPage: number;
   count: number;
+  edicion: boolean;
+  newModified: boolean;
 }
 
 export interface NewsActions {
@@ -29,6 +31,7 @@ export interface NewsActions {
   createDraft: (body: New) => void;
   getNewById: (id: string) => void;
   deleteNewById: (id: string) => void;
+  setEdicion: (val: boolean) => void;
 }
 
 export type NewsSlice = NewsState & NewsActions;
@@ -136,12 +139,15 @@ const initialState: NewsState = {
   errorCreateDraft: false,
   totalPages: 1,
   currentPage: 1,
-  count: 1
+  count: 1,
+  edicion: false,
+  newModified: false,
 };
 
 export const createNewsSlice: StateCreator<NewsSlice> = (set, get) => ({
   ...initialState,
   resetCargaDatosState: () => set({ ...initialState }),
+  setEdicion: (val: boolean) => set({ edicion: val }),
   getAllNews: async (page: number, limit: number, title?: string) => {
     set({ loadingNews: true });
     try {
@@ -199,7 +205,7 @@ export const createNewsSlice: StateCreator<NewsSlice> = (set, get) => ({
     try {
       const response = await NewsService.updateNew(id, body);
       if (!response) throw new Error("Error al registrar noticia");
-      set({ newCreated: true });
+      set({ newModified: true });
     } catch (error) {
       set({ errorCreateNew: true });
     } finally {
