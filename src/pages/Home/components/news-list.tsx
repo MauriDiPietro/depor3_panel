@@ -53,10 +53,9 @@ const formatDate = (date: string | Date | undefined): string => {
   return new Intl.DateTimeFormat("es-ES", {
     day: "2-digit",
     month: "2-digit",
-    year: "numeric"
+    year: "numeric",
   }).format(new Date(date)); // "29/01/2025"
 };
-
 
 export const NewsList = () => {
   const getAllNews = useGlobalStore((state) => state.getAllNews);
@@ -85,6 +84,11 @@ export const NewsList = () => {
   const handleEdit = (id: string | undefined) => {
     console.log(`Edit news with ID: ${id}`);
     navigate(`/publicacion/${id}`);
+  };
+
+  const handlePrev = (id: string | undefined) => {
+    console.log(`Edit news with ID: ${id}`);
+    window.open(`https://www.depor3.com/news/${id}`, "_blank");
   };
 
   const handleDelete = (id: string) => {
@@ -222,9 +226,9 @@ export const NewsList = () => {
                 </Typography>
 
                 <Typography variant="h6" sx={{ flex: 1, textAlign: "center" }}>
-                  {formatDate(noticia.date)}{" "}
-                  {/* Mostrar fecha normalizada */}
+                  {formatDate(noticia.date)} {/* Mostrar fecha normalizada */}
                 </Typography>
+
                 <Box sx={{ display: "flex", gap: 1 }}>
                   <IconButton
                     color="primary"
@@ -238,6 +242,14 @@ export const NewsList = () => {
                   >
                     <DeleteIcon />
                   </IconButton>
+                  {!noticia.active && (
+                    <IconButton
+                      color="primary"
+                      onClick={() => handlePrev(noticia._id)}
+                    >
+                      Vista previa
+                    </IconButton>
+                  )}
                 </Box>
               </Box>
             ))}
