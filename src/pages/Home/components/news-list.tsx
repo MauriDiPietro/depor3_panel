@@ -32,7 +32,7 @@ const formatDate = (date: string | Date | undefined): string => {
 export const NewsList = () => {
   const getAllNews = useGlobalStore((state) => state.getAllNews);
   // const count = useGlobalStore((state) => state.count);
-  const deleteNewById = useGlobalStore((state) => state.deleteNewById);
+  // const deleteNewById = useGlobalStore((state) => state.deleteNewById);
   const loadingNews = useGlobalStore((state) => state.loadingNews);
   const newDeleted = useGlobalStore((state) => state.newDeleted);
   const errorDeleteNew = useGlobalStore((state) => state.errorDeleteNew);
@@ -48,7 +48,7 @@ export const NewsList = () => {
   };
 
   useEffect(() => {
-    getAllNews(1, itemsPerPage);
+    getAllNews(1, itemsPerPage, "", "");
   }, []);
 
   const navigate = useNavigate();
@@ -73,11 +73,15 @@ export const NewsList = () => {
   const [tabValue, setTabValue] = useState(0);
 
   const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
+    if(newValue === 2) {
+      getAllNews(1, itemsPerPage, "", "Patio del deportista");
+    } else getAllNews(1, itemsPerPage, "", "")
     setTabValue(newValue);
   };
 
   const publishedNews = news.filter((noticia: New) => noticia.active);
   const draftNews = news.filter((noticia: New) => !noticia.active);
+  const patioDelDeportista = news.filter((noticia: New) => noticia.category === "Patio del deportista" );
 
   return (
     <Box sx={{ width: "100%", mt: 9, px: 2 }}>
@@ -108,6 +112,7 @@ export const NewsList = () => {
       <Tabs value={tabValue} onChange={handleChange} aria-label="news tabs">
         <Tab label="Publicadas" />
         <Tab label="Borradores" />
+        <Tab label="Patio del deportista" />
       </Tabs>
       {loadingNews ? (
         <Box
@@ -122,7 +127,7 @@ export const NewsList = () => {
         </Box>
       ) : (
         <Box sx={{ width: "100%" }}>
-          {(tabValue === 0 ? publishedNews : draftNews)
+          {(tabValue === 0 ? publishedNews : tabValue === 1 ? draftNews : patioDelDeportista)
             .map((noticia: New, index: number) => (
               <Box
                 key={index}

@@ -24,7 +24,7 @@ export interface NewsState {
 
 export interface NewsActions {
   resetCargaDatosState: () => void;
-  getAllNews: (page: number, limit: number, title?: string) => void;
+  getAllNews: (page: number, limit: number, title?: string, category?: string) => void;
   setCurrentPage: (page: number) => void;
   createNew: (body: New) => void;
   updateNew: (id: string, body: New) => void;
@@ -148,10 +148,10 @@ export const createNewsSlice: StateCreator<NewsSlice> = (set, get) => ({
   ...initialState,
   resetCargaDatosState: () => set({ ...initialState }),
   setEdicion: (val: boolean) => set({ edicion: val }),
-  getAllNews: async (page: number, limit: number, title?: string) => {
+  getAllNews: async (page: number, limit: number, title?: string, category?: string) => {
     set({ loadingNews: true });
     try {
-      const response = await NewsService.getAllNews(page, limit, title);
+      const response = await NewsService.getAllNews(page, limit, title, category);
       if (!response) throw new Error("No se encontraron las noticias");
       set({ news: response.data, newsLoaded: true, totalPages: response.info.totalPages, count: response.info.count });
     } catch (error) {
