@@ -194,7 +194,7 @@ export const Editor: React.FC<{}> = () => {
     if (edicion && id) {
       // Si existe ID, estamos editando
       console.log("Editando noticia con ID:", id);
-      updateNew(id, formData);
+      updateNew(id, { ...formData, active: true});
     } else {
       console.log("Creando nueva noticia");
       createNew(formData);
