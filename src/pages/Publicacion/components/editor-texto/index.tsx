@@ -79,6 +79,7 @@ export const Editor: React.FC<{}> = () => {
     "Historias del Gen Dominante",
     "Motociclismo",
     "Opinión",
+    "Patio del deportista",
     "Política Deportiva",
     "Tenis",
   ]);
