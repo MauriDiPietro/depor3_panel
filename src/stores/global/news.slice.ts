@@ -181,7 +181,7 @@ export const createNewsSlice: StateCreator<NewsSlice> = (set, get) => ({
     } catch (error) {
       set({ errorNews: true });
     } finally {
-      set({ loadingNews: false });
+      set({ loadingNews: false, newDeleted: false });
     }
   },
   createNew: async (body: New) => {

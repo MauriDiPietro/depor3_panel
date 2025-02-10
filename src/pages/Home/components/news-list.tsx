@@ -14,7 +14,7 @@ import {
   Pagination,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-// import DeleteIcon from "@mui/icons-material/Delete";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { New } from "../../../types/new.type";
 import { useGlobalStore } from "../../../stores/global";
 import { useNavigate } from "react-router-dom";
@@ -32,7 +32,7 @@ const formatDate = (date: string | Date | undefined): string => {
 export const NewsList = () => {
   const getAllNews = useGlobalStore((state) => state.getAllNews);
   // const count = useGlobalStore((state) => state.count);
-  // const deleteNewById = useGlobalStore((state) => state.deleteNewById);
+  const deleteNewById = useGlobalStore((state) => state.deleteNewById);
   const loadingNews = useGlobalStore((state) => state.loadingNews);
   const newDeleted = useGlobalStore((state) => state.newDeleted);
   const errorDeleteNew = useGlobalStore((state) => state.errorDeleteNew);
@@ -63,25 +63,27 @@ export const NewsList = () => {
     window.open(`https://www.depor3.com/news/${id}`, "_blank");
   };
 
-  // const handleDelete = (id: string) => {
-  //   console.log(`Delete news with ID: ${id}`);
-  //   deleteNewById(id);
-  // };
+  const handleDelete = (id: string) => {
+    console.log(`Delete news with ID: ${id}`);
+    deleteNewById(id);
+  };
 
   const news = useGlobalStore((state) => state.news);
 
   const [tabValue, setTabValue] = useState(0);
 
   const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
-    if(newValue === 2) {
+    if (newValue === 2) {
       getAllNews(1, itemsPerPage, "", "Patio del deportista");
-    } else getAllNews(1, itemsPerPage, "", "")
+    } else getAllNews(1, itemsPerPage, "", "");
     setTabValue(newValue);
   };
 
   const publishedNews = news.filter((noticia: New) => noticia.active);
   const draftNews = news.filter((noticia: New) => !noticia.active);
-  const patioDelDeportista = news.filter((noticia: New) => noticia.category === "Patio del deportista" );
+  const patioDelDeportista = news.filter(
+    (noticia: New) => noticia.category === "Patio del deportista"
+  );
 
   return (
     <Box sx={{ width: "100%", mt: 9, px: 2 }}>
@@ -127,50 +129,61 @@ export const NewsList = () => {
         </Box>
       ) : (
         <Box sx={{ width: "100%" }}>
-          {(tabValue === 0 ? publishedNews : tabValue === 1 ? draftNews : patioDelDeportista)
-            .map((noticia: New, index: number) => (
-              <Box
-                key={index}
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  borderBottom: "1px solid #e0e0e0",
-                  py: 2,
-                }}
-              >
-                <Typography variant="h6" sx={{ flex: 1, textAlign: "left" }}>
-                  {noticia.title}
-                </Typography>
+          {(tabValue === 0
+            ? publishedNews
+            : tabValue === 1
+            ? draftNews
+            : patioDelDeportista
+          ).map((noticia: New, index: number) => (
+            <Box
+              key={index}
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                borderBottom: "1px solid #e0e0e0",
+                py: 2,
+              }}
+            >
+              <Typography variant="h6" sx={{ flex: 1, textAlign: "left" }}>
+                {noticia.title}
+              </Typography>
 
-                <Typography variant="h6" sx={{ flex: 1, textAlign: "center" }}>
-                  {formatDate(noticia.date)} {/* Mostrar fecha normalizada */}
-                </Typography>
+              <Typography variant="h6" sx={{ flex: 1, textAlign: "center" }}>
+                {formatDate(noticia.date)} {/* Mostrar fecha normalizada */}
+              </Typography>
 
-                <Box sx={{ display: "flex", gap: 1 }}>
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <IconButton
+                  color="primary"
+                  onClick={() => handleEdit(noticia._id)}
+                >
+                  <EditIcon />
+                </IconButton>
+                {noticia.active && (
                   <IconButton
-                    color="primary"
-                    onClick={() => handleEdit(noticia._id)}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  {/* <IconButton
                     color="secondary"
                     onClick={() => handleDelete(noticia._id as string)}
                   >
                     <DeleteIcon />
-                  </IconButton> */}
-                  {!noticia.active && (
-                    <IconButton
-                      color="primary"
-                      onClick={() => handlePrev(noticia._id)}
-                    >
-                      Vista previa
-                    </IconButton>
-                  )}
-                </Box>
+                  </IconButton>
+                )}
+                {!noticia.active && (
+                  <IconButton
+                    color="primary"
+                    onClick={() => handlePrev(noticia._id)}
+                  >
+                    Vista previa
+                  </IconButton>
+                )}
+                {noticia.category === "Patio del deportista" && (
+                  <Typography>
+                    ({noticia.active ? "Publicada" : "Borrador"})
+                  </Typography>
+                )}
               </Box>
-            ))}
+            </Box>
+          ))}
           {/* Paginado */}
           <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
             <Pagination
@@ -191,7 +204,7 @@ export const NewsList = () => {
         <DialogTitle>Publicación eliminada</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Publicación eliminada con éxito. ✔
+            La publicación volvió a borrador ✔
           </DialogContentText>
         </DialogContent>
         <DialogActions>
