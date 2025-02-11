@@ -31,12 +31,24 @@ const formatDate = (date: string | Date | undefined): string => {
 
 export const NewsList = () => {
   const getAllNews = useGlobalStore((state) => state.getAllNews);
+  const getAllDrafts = useGlobalStore((state) => state.getAllDrafts);
+  const getAllNewsPatio = useGlobalStore((state) => state.getAllNewsPatio);
   // const count = useGlobalStore((state) => state.count);
   const deleteNewById = useGlobalStore((state) => state.deleteNewById);
+  const deleteNewPatioById = useGlobalStore((state) => state.deleteNewPatioById);
   const loadingNews = useGlobalStore((state) => state.loadingNews);
   const newDeleted = useGlobalStore((state) => state.newDeleted);
   const errorDeleteNew = useGlobalStore((state) => state.errorDeleteNew);
   const totalPages = useGlobalStore((state) => state.totalPages);
+  const news = useGlobalStore((state) => state.news);
+  const drafts = useGlobalStore((state) => state.drafts);
+  // const setIsDraft = useGlobalStore((state) => state.setIsDraft);
+  // const setIsPublished = useGlobalStore((state) => state.setIsPublished);
+  // const setIsPatio = useGlobalStore((state) => state.setIsPatio);
+
+
+  const newsPatio = useGlobalStore((state) => state.newsPatio);
+
 
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -45,45 +57,64 @@ export const NewsList = () => {
   const handlePageChange = (_event, value) => {
     setCurrentPage(value);
     getAllNews(value, itemsPerPage);
+    if(newsPatio.length > 0){
+      getAllNewsPatio(value, itemsPerPage);
+    }
   };
 
   useEffect(() => {
     getAllNews(1, itemsPerPage, "", "");
+    getAllNewsPatio(1, itemsPerPage, "");
+    getAllDrafts(1, itemsPerPage, "");
   }, []);
 
   const navigate = useNavigate();
 
   const handleEdit = (id: string | undefined) => {
-    console.log(`Edit news with ID: ${id}`);
-    navigate(`/publicacion/${id}`);
+    if(tabValue === 0){
+      navigate(`/publicacion/${id}`);
+    }
+    if(tabValue === 1 || tabValue === 2) {
+      navigate(`/draft/${id}`);
+    }
+    if(tabValue === 3){
+      navigate(`/patio/${id}`);
+    }
   };
 
   const handlePrev = (id: string | undefined) => {
-    console.log(`Edit news with ID: ${id}`);
-    window.open(`https://www.depor3.com/news/${id}`, "_blank");
+    window.open(`https://www.depor3.com/draft/${id}`, "_blank");
+    // window.open(`http://localhost:5174/draft/${id}`, "_blank");
   };
 
   const handleDelete = (id: string) => {
-    console.log(`Delete news with ID: ${id}`);
-    deleteNewById(id);
+    if(tabValue === 0){
+      deleteNewById(id);
+    }
+    if(tabValue === 3) {
+      deleteNewPatioById(id);
+    }
   };
-
-  const news = useGlobalStore((state) => state.news);
 
   const [tabValue, setTabValue] = useState(0);
 
   const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
+    if(newValue === 0){
+      getAllNews(1, itemsPerPage, "", "");
+    }
+    if(newValue === 1){
+      getAllDrafts(1, itemsPerPage, "", "");
+    }
     if (newValue === 2) {
-      getAllNews(1, itemsPerPage, "", "Patio del deportista");
-    } else getAllNews(1, itemsPerPage, "", "");
+      getAllDrafts(1, itemsPerPage, "", "Patio del deportista");
+    } 
+    if(newValue === 3){
+      getAllNewsPatio(1, itemsPerPage, "");
+    }
     setTabValue(newValue);
   };
 
   const publishedNews = news.filter((noticia: New) => noticia.active);
-  const draftNews = news.filter((noticia: New) => !noticia.active);
-  const patioDelDeportista = news.filter(
-    (noticia: New) => noticia.category === "Patio del deportista"
-  );
 
   return (
     <Box sx={{ width: "100%", mt: 9, px: 2 }}>
@@ -114,7 +145,8 @@ export const NewsList = () => {
       <Tabs value={tabValue} onChange={handleChange} aria-label="news tabs">
         <Tab label="Publicadas" />
         <Tab label="Borradores" />
-        <Tab label="Patio del deportista" />
+        <Tab label="Patio del deportista (Borradores)" />
+        <Tab label="Patio del deportista (Publicadas)" />
       </Tabs>
       {loadingNews ? (
         <Box
@@ -132,8 +164,12 @@ export const NewsList = () => {
           {(tabValue === 0
             ? publishedNews
             : tabValue === 1
-            ? draftNews
-            : patioDelDeportista
+            ? drafts
+            : tabValue === 2 ?
+            drafts 
+            : tabValue === 3 ?
+            newsPatio
+            : []
           ).map((noticia: New, index: number) => (
             <Box
               key={index}
@@ -160,7 +196,7 @@ export const NewsList = () => {
                 >
                   <EditIcon />
                 </IconButton>
-                {noticia.active && (
+                {(tabValue === 0 || tabValue === 3) && (
                   <IconButton
                     color="secondary"
                     onClick={() => handleDelete(noticia._id as string)}
@@ -168,7 +204,7 @@ export const NewsList = () => {
                     <DeleteIcon />
                   </IconButton>
                 )}
-                {!noticia.active && (
+                {tabValue !== 0 && tabValue !== 3 && (
                   <IconButton
                     color="primary"
                     onClick={() => handlePrev(noticia._id)}
@@ -176,11 +212,11 @@ export const NewsList = () => {
                     Vista previa
                   </IconButton>
                 )}
-                {noticia.category === "Patio del deportista" && (
+                {/* {noticia.category === "Patio del deportista" && (
                   <Typography>
                     ({noticia.active ? "Publicada" : "Borrador"})
                   </Typography>
-                )}
+                )} */}
               </Box>
             </Box>
           ))}

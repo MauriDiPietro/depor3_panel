@@ -24,28 +24,22 @@ export const Editor: React.FC<{}> = () => {
   const quillRef = useRef<ReactQuill | null>(null); // Referencia al editor
   const { id } = useParams<{ id: string }>();
 
-  const createNew = useGlobalStore((state) => state.createNew);
   const createDraft = useGlobalStore((state) => state.createDraft);
-  const getNewById = useGlobalStore((state) => state.getNewById); // Función para obtener noticia
-  const updateNew = useGlobalStore((state) => state.updateNew);
-  const newDetail = useGlobalStore((state) => state.new);
-
+  const createNew = useGlobalStore((state) => state.createNew);
+  const errorCreateNew = useGlobalStore((state) => state.errorCreateNew);
+  const newCreated = useGlobalStore((state) => state.newCreated);
+  const getDraftById = useGlobalStore((state) => state.getDraftById); // Función para obtener noticia
+  const updateDraft = useGlobalStore((state) => state.updateDraft);
+  const draft = useGlobalStore((state) => state.draft);
   const edicion = useGlobalStore((state) => state.edicion);
   const setEdicion = useGlobalStore((state) => state.setEdicion);
-
-
-  // const loadingNews = useGlobalStore((state) => state.loadingNews);
-  const newCreated = useGlobalStore((state) => state.newCreated);
-  const newModified = useGlobalStore((state) => state.newModified);
-
   const draftCreated = useGlobalStore((state) => state.draftCreated);
+  const draftModified = useGlobalStore((state) => state.draftModified);
   const errorCreateDraft = useGlobalStore((state) => state.errorCreateDraft);
 
   const resetCargaDatosState = useGlobalStore(
     (state) => state.resetCargaDatosState
   );
-
-  const errorCreateNew = useGlobalStore((state) => state.errorCreateNew);
 
   const [formLoaded, setFormLoaded] = useState<boolean>(false);
 
@@ -192,54 +186,45 @@ export const Editor: React.FC<{}> = () => {
   };
 
   const handleSubmit = () => {
-    if (edicion && id) {
-      // Si existe ID, estamos editando
-      console.log("Editando noticia con ID:", id);
-      updateNew(id, { ...formData, active: true});
-    } else {
-      console.log("Creando nueva noticia");
-      createNew(formData);
-    }
+    createNew(formData);
   };
 
   const handleSubmitBorrador = () => {
     console.log("Datos enviados:", formData);
     if (edicion && id) {
-      // Si existe ID, estamos editando
-      console.log("Editando noticia con ID:", id);
-      updateNew(id, formData);
+      updateDraft(id, formData);
     } else {
       createDraft(formData);
     }
   };
 
   const handleRetry = async () => {
-    await handleSubmit();
+    await handleSubmitBorrador();
   };
 
   useEffect(() => {
     if (id) {
-      getNewById(id);
+      getDraftById(id);
       setEdicion(true);
     }
     return () => resetCargaDatosState();
   }, [id]);
 
   useEffect(() => {
-    if (newDetail) {
+    if (draft) {
       setFormData({
         ...formData,
-        title: newDetail.title,
-        description: newDetail.description,
-        category: newDetail.category,
-        author: newDetail.author,
-        body: newDetail.body,
-        image: newDetail.image,
-        multimedia: newDetail.multimedia,
+        title: draft.title,
+        description: draft.description,
+        category: draft.category,
+        author: draft.author,
+        body: draft.body,
+        image: draft.image,
+        multimedia: draft.multimedia,
       });
       setFormLoaded(true);
     }
-  }, [newDetail]);
+  }, [draft]);
 
   const handleCategoryAdd = (newCategory: string) => {
     if (!categories.includes(newCategory)) {
@@ -537,21 +522,21 @@ export const Editor: React.FC<{}> = () => {
 
           {/* Botón de Enviar */}
           <Grid item xs={12}>
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth
-              onClick={handleSubmit}
-              sx={{ mt: 3 }}
-              disabled={
-                !formData.image ||
-                !formData.title ||
-                !formData.body ||
-                !formData.author
-              }
-            >
-              {id ? "Guardar y Publicar" : "Publicar Noticia"}
-            </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            fullWidth
+            onClick={handleSubmit}
+            sx={{ mt: 3 }}
+            disabled={
+              !formData.image ||
+              !formData.title ||
+              !formData.body ||
+              !formData.author
+            }
+          >
+            Guardar y Publicar
+          </Button>
             {!formData.image && (
               <Typography display="block" variant="overline" color="red">
                 Falta cargar la imagen principal
@@ -587,10 +572,10 @@ export const Editor: React.FC<{}> = () => {
       </Box>
 
       {/* Diálogo de éxito */}
-      <Dialog open={newCreated} onClose={() => navigate("/")}>
+      <Dialog open={draftCreated} onClose={() => navigate("/")}>
         <DialogTitle>Publicación creada</DialogTitle>
         <DialogContent>
-          <DialogContentText>Publicación creada con éxito. ✔</DialogContentText>
+          <DialogContentText>Borrador creado con éxito. ✔</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button
@@ -606,10 +591,31 @@ export const Editor: React.FC<{}> = () => {
       </Dialog>
 
       {/* Diálogo de éxito */}
-      <Dialog open={newModified} onClose={() => navigate("/")}>
-        <DialogTitle>Publicación actualizada</DialogTitle>
+      <Dialog open={newCreated} onClose={() => navigate("/")}>
+        <DialogTitle>Publicada con éxito</DialogTitle>
         <DialogContent>
-          <DialogContentText>Publicación actualizada con éxito. ✔</DialogContentText>
+          <DialogContentText>Se publicó la nota ✔</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              navigate("/");
+            }}
+            color="primary"
+            variant="contained"
+          >
+            Aceptar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Diálogo de éxito */}
+      <Dialog open={draftModified} onClose={() => navigate("/")}>
+        <DialogTitle>Borrador actualizado</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Borrador actualizado con éxito. ✔
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button
@@ -625,11 +631,12 @@ export const Editor: React.FC<{}> = () => {
       </Dialog>
 
       {/* Diálogo de error */}
-      <Dialog open={errorCreateNew} onClose={() => navigate("/")}>
+      <Dialog open={errorCreateDraft} onClose={() => navigate("/")}>
         <DialogTitle>Error</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Ocurrió un error al crear la publicación.
+            Al crear el borrador. No te preocupes, se descargó un respaldo de lo
+            que escribiste.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -639,10 +646,31 @@ export const Editor: React.FC<{}> = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Diálogo de error */}
+      <Dialog open={errorCreateNew} onClose={() => navigate("/")}>
+        <DialogTitle>Error</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Al publicar la nota. Volvé a intentarlo más tarde.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              navigate("/");
+            }}
+            color="primary"
+            variant="contained"
+          >
+            Aceptar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Dialog open={draftCreated} onClose={() => navigate("/")}>
         <DialogTitle>Borrador creado</DialogTitle>
         <DialogContent>
-          <DialogContentText>Borrador creado con éxito. Se descargó el archivo. ✔</DialogContentText>
+          <DialogContentText>Borrador creado con éxito. ✔</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button

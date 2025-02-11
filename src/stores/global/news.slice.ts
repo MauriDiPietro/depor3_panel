@@ -5,9 +5,15 @@ import { saveAs } from "file-saver";
 
 export interface NewsState {
   news: New[] | [];
+  newsPatio: New[] | [];
+  drafts: New[] | [];
   new: any;
+  draft: any;
+  newPatio: any;
   loadingNews: boolean;
+  loadingNewsPatio: boolean;
   newsLoaded: boolean;
+  newsPatioLoaded: boolean;
   errorNews: boolean;
   newCreated: boolean;
   newDeleted: boolean;
@@ -20,18 +26,46 @@ export interface NewsState {
   count: number;
   edicion: boolean;
   newModified: boolean;
+  draftLoaded: boolean;
+  errorDrafts: boolean;
+  loadingDrafts: boolean;
+  draftDeleted: boolean;
+  draftModified: boolean;
+  isDraft: boolean;
+  isPublished: boolean;
+  isPatio: boolean;
 }
 
 export interface NewsActions {
   resetCargaDatosState: () => void;
-  getAllNews: (page: number, limit: number, title?: string, category?: string) => void;
+  getAllDrafts: (
+    page: number,
+    limit: number,
+    title?: string,
+    category?: string
+  ) => void;
+  getDraftById: (id: string) => void;
+  getAllNews: (
+    page: number,
+    limit: number,
+    title?: string,
+    category?: string
+  ) => void;
+  getAllNewsPatio: (page: number, limit: number, title?: string) => void;
   setCurrentPage: (page: number) => void;
   createNew: (body: New) => void;
   updateNew: (id: string, body: New) => void;
   createDraft: (body: New) => void;
+  updateDraft: (id: string, body: New) => void;
   getNewById: (id: string) => void;
+  getNewPatioById: (id: string) => void;
   deleteNewById: (id: string) => void;
+  deleteNewPatioById: (id: string) => void;
+  deleteDraftById: (id: string) => void;
   setEdicion: (val: boolean) => void;
+  setIsDraft: (val: boolean) => void;
+  setIsPublished: (val: boolean) => void;
+  setIsPatio: (val: boolean) => void;
 }
 
 export type NewsSlice = NewsState & NewsActions;
@@ -127,9 +161,15 @@ const initialState: NewsState = {
     // active: true,
     // },
   ],
+  newsPatio: [],
+  drafts: [],
   new: null,
+  newPatio: null,
+  draft: null,
   loadingNews: false,
+  loadingNewsPatio: false,
   newsLoaded: false,
+  newsPatioLoaded: false,
   newDeleted: false,
   errorNews: false,
   errorDeleteNew: false,
@@ -142,18 +182,61 @@ const initialState: NewsState = {
   count: 1,
   edicion: false,
   newModified: false,
+  draftLoaded: false,
+  errorDrafts: false,
+  loadingDrafts: false,
+  draftDeleted: false,
+  draftModified: false,
+  isDraft: false,
+  isPublished: false,
+  isPatio: false
 };
 
 export const createNewsSlice: StateCreator<NewsSlice> = (set, get) => ({
   ...initialState,
   resetCargaDatosState: () => set({ ...initialState }),
   setEdicion: (val: boolean) => set({ edicion: val }),
-  getAllNews: async (page: number, limit: number, title?: string, category?: string) => {
+  setIsDraft: (val: boolean) => set({ isDraft: val }),
+  setIsPublished: (val: boolean) => set({ isPublished: val }),
+  setIsPatio: (val: boolean) => set({ isPatio: val }),
+  getAllNews: async (
+    page: number,
+    limit: number,
+    title?: string,
+    category?: string
+  ) => {
     set({ loadingNews: true });
     try {
-      const response = await NewsService.getAllNews(page, limit, title, category);
+      const response = await NewsService.getAllNews(
+        page,
+        limit,
+        title,
+        category
+      );
       if (!response) throw new Error("No se encontraron las noticias");
-      set({ news: response.data, newsLoaded: true, totalPages: response.info.totalPages, count: response.info.count });
+      set({
+        news: response.data,
+        newsLoaded: true,
+        totalPages: response.info.totalPages,
+        count: response.info.count,
+      });
+    } catch (error) {
+      set({ errorNews: true });
+    } finally {
+      set({ loadingNews: false });
+    }
+  },
+  getAllNewsPatio: async (page: number, limit: number, title?: string) => {
+    set({ loadingNews: true });
+    try {
+      const response = await NewsService.getAllNewsPatio(page, limit, title);
+      if (!response) throw new Error("No se encontraron las noticias");
+      set({
+        newsPatio: response.data,
+        newsPatioLoaded: true,
+        totalPages: response.info.totalPages,
+        count: response.info.count,
+      });
     } catch (error) {
       set({ errorNews: true });
     } finally {
@@ -172,10 +255,34 @@ export const createNewsSlice: StateCreator<NewsSlice> = (set, get) => ({
       set({ loadingNews: false });
     }
   },
+  getNewPatioById: async (id: string) => {
+    set({ loadingNews: true });
+    try {
+      const response = await NewsService.getNewPatioById(id);
+      if (!response) throw new Error("No se encontraron las noticias");
+      set({ newPatio: response.data, newsPatioLoaded: true });
+    } catch (error) {
+      set({ errorNews: true });
+    } finally {
+      set({ loadingNewsPatio: false });
+    }
+  },
   deleteNewById: async (id: string) => {
     set({ loadingNews: true });
     try {
       const response = await NewsService.deleteNewById(id);
+      if (!response) throw new Error("No se encontraron las noticias");
+      set({ newDeleted: true });
+    } catch (error) {
+      set({ errorNews: true });
+    } finally {
+      set({ loadingNews: false, newDeleted: false });
+    }
+  },
+  deleteNewPatioById: async (id: string) => {
+    set({ loadingNews: true });
+    try {
+      const response = await NewsService.deleteNewPatioById(id);
       if (!response) throw new Error("No se encontraron las noticias");
       set({ newDeleted: true });
     } catch (error) {
@@ -192,11 +299,13 @@ export const createNewsSlice: StateCreator<NewsSlice> = (set, get) => ({
       if (!response) throw new Error("Error al registrar noticia");
       set({ newCreated: true });
     } catch (error) {
-      const blob = new Blob([JSON.stringify(body, null, 2)], { type: "application/json" });
+      const blob = new Blob([JSON.stringify(body, null, 2)], {
+        type: "application/json",
+      });
       saveAs(blob, "publicacion.json");
       set({ errorCreateNew: true });
     } finally {
-      if(get().newCreated) localStorage.removeItem("publicacion");
+      if (get().newCreated) localStorage.removeItem("publicacion");
       set({ loadingNews: false });
     }
   },
@@ -212,21 +321,91 @@ export const createNewsSlice: StateCreator<NewsSlice> = (set, get) => ({
       set({ loadingNews: false });
     }
   },
-  createDraft: async (body: New) => {
-    set({ loadingNews: true });
+  getAllDrafts: async (
+    page: number,
+    limit: number,
+    title?: string,
+    category?: string
+  ) => {
+    set({ loadingDrafts: true });
     try {
-      // const response = await NewsService.createDraft(body);
-      // if (!response) throw new Error("Error al registrar noticia");
-      const response = await NewsService.createNew({...body, active: false});
-      if (!response) throw new Error("Error al registrar borrador");
+      const response = await NewsService.getAllDrafts(
+        page,
+        limit,
+        title,
+        category
+      );
+      if (!response) throw new Error("No se encontraron los borradores");
+      set({
+        drafts: response.data,
+        draftLoaded: true,
+        totalPages: response.info.totalPages,
+        count: response.info.count,
+      });
+    } catch (error) {
+      set({ errorDrafts: true });
+    } finally {
+      set({ loadingDrafts: false });
+    }
+  },
+  getDraftById: async (id: string) => {
+    set({ loadingDrafts: true });
+    try {
+      const response = await NewsService.getDraftById(id);
+      if (!response) throw new Error("No se encontraron las noticias");
+      set({ draft: response.data, draftLoaded: true });
+    } catch (error) {
+      set({ errorDrafts: true });
+    } finally {
+      set({ loadingDrafts: false });
+    }
+  },
+  deleteDraftById: async (id: string) => {
+    set({ loadingDrafts: true });
+    try {
+      const response = await NewsService.deleteDraftById(id);
+      if (!response) throw new Error("No se encontraron las noticias");
+      set({ draftDeleted: true });
+    } catch (error) {
+      set({ errorNews: true });
+    } finally {
+      set({ loadingDrafts: false, draftDeleted: false });
+    }
+  },
+  createDraft: async (body: New) => {
+    set({ loadingDrafts: true });
+    try {
+      const response = await NewsService.createDraft(body);
+      if (!response) throw new Error("Error al registrar noticia");
+      // const response = await NewsService.createNew({ ...body, active: false });
+      // if (!response) throw new Error("Error al registrar borrador");
       if (response) set({ draftCreated: true });
     } catch (error) {
-      const blob = new Blob([JSON.stringify(body, null, 2)], { type: "application/json" });
+      const blob = new Blob([JSON.stringify(body, null, 2)], {
+        type: "application/json",
+      });
       saveAs(blob, "publicacion.json");
       set({ errorCreateDraft: true });
     } finally {
-      set({ loadingNews: false });
+      set({ loadingDrafts: false });
     }
   },
-  setCurrentPage: (val: number) => set({ currentPage: val })
+  updateDraft: async (id: string, body: New) => {
+    set({ loadingDrafts: true });
+    try {
+      const response = await NewsService.updateDraft(id, body);
+      if (!response) throw new Error("Error al registrar noticia");
+      set({ draftModified: true });
+    } catch (error) {
+      const blob = new Blob([JSON.stringify(body, null, 2)], {
+        type: "application/json",
+      });
+      saveAs(blob, "publicacion.json");
+      set({ errorCreateDraft: true });
+    } finally {
+      set({ loadingDrafts: false });
+    }
+  },
+
+  setCurrentPage: (val: number) => set({ currentPage: val }),
 });
