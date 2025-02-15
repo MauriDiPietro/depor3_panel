@@ -25,6 +25,7 @@ export const Editor: React.FC<{}> = () => {
   const { id } = useParams<{ id: string }>();
 
   const createDraft = useGlobalStore((state) => state.createDraft);
+  const deleteDraftById = useGlobalStore((state) => state.deleteDraftById);
   const createNew = useGlobalStore((state) => state.createNew);
   const errorCreateNew = useGlobalStore((state) => state.errorCreateNew);
   const newCreated = useGlobalStore((state) => state.newCreated);
@@ -186,7 +187,13 @@ export const Editor: React.FC<{}> = () => {
   };
 
   const handleSubmit = () => {
-    createNew(formData);
+    try {
+      createNew(formData);
+    } catch (error: unknown) {
+      throw new Error((error as Error).message)
+    } finally {
+      deleteDraftById(id as string);
+    }
   };
 
   const handleSubmitBorrador = () => {
