@@ -13,7 +13,6 @@ import {
   DialogActions,
   DialogContent,
   DialogContentText,
-  DialogTitle,
   Autocomplete,
 } from "@mui/material";
 import ReactQuill from "react-quill";
@@ -25,24 +24,29 @@ export const Editor: React.FC<{}> = () => {
   const { id } = useParams<{ id: string }>();
 
   const createDraft = useGlobalStore((state) => state.createDraft);
-  const deleteDraftById = useGlobalStore((state) => state.deleteDraftById);
-  const createNew = useGlobalStore((state) => state.createNew);
-  const errorCreateNew = useGlobalStore((state) => state.errorCreateNew);
-  const newCreated = useGlobalStore((state) => state.newCreated);
+  // const deleteDraftById = useGlobalStore((state) => state.deleteDraftById);
+  const createNewDesdeDraft = useGlobalStore((state) => state.createNewDesdeDraft);
   const getDraftById = useGlobalStore((state) => state.getDraftById); // Función para obtener noticia
   const updateDraft = useGlobalStore((state) => state.updateDraft);
   const draft = useGlobalStore((state) => state.draft);
   const edicion = useGlobalStore((state) => state.edicion);
   const setEdicion = useGlobalStore((state) => state.setEdicion);
-  const draftCreated = useGlobalStore((state) => state.draftCreated);
-  const draftModified = useGlobalStore((state) => state.draftModified);
-  const errorCreateDraft = useGlobalStore((state) => state.errorCreateDraft);
+  // const errorCreateNew = useGlobalStore((state) => state.errorCreateNew);
+  // const newCreated = useGlobalStore((state) => state.newCreated);
+  // const draftCreated = useGlobalStore((state) => state.draftCreated);
+  // const draftModified = useGlobalStore((state) => state.draftModified);
+  // const errorCreateDraft = useGlobalStore((state) => state.errorCreateDraft);
+  const isOpenDialog = useGlobalStore((state) => state.isOpenDialog);
+  const setIsOpenDialog = useGlobalStore((state) => state.setIsOpenDialog);
+  const message = useGlobalStore((state) => state.message);
 
   const resetCargaDatosState = useGlobalStore(
     (state) => state.resetCargaDatosState
   );
 
   const [formLoaded, setFormLoaded] = useState<boolean>(false);
+
+  // const [caption, setCaption] = useState<string>("");
 
   const navigate = useNavigate();
 
@@ -134,11 +138,6 @@ export const Editor: React.FC<{}> = () => {
     if (file) {
       const imageUrl = await handleImageUpload(file, false);
       if (imageUrl) {
-        // const imageHtml = `<div style="display: block; width: 100%; text-align: center; padding: 5px;">
-        //   <a href="${imageUrl}" target="_blank" rel="noopener noreferrer">
-        //     <img src="${imageUrl}" alt="Imagen" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);" />
-        //   </a>
-        // </div>`;
         const imageHtml = `
         <div id="${id}" style="position: relative; display: inline-block; margin: 10px;">
           <a href="${imageUrl}" target="_blank" rel="noopener noreferrer">
@@ -187,13 +186,7 @@ export const Editor: React.FC<{}> = () => {
   };
 
   const handleSubmit = () => {
-    try {
-      createNew(formData);
-    } catch (error: unknown) {
-      throw new Error((error as Error).message)
-    } finally {
-      deleteDraftById(id as string);
-    }
+      createNewDesdeDraft(formData, id as string);
   };
 
   const handleSubmitBorrador = () => {
@@ -205,9 +198,12 @@ export const Editor: React.FC<{}> = () => {
     }
   };
 
-  const handleRetry = async () => {
-    await handleSubmitBorrador();
-  };
+  useEffect(() => {
+    const interval = setInterval(() => {
+      handleSubmitBorrador();
+    }, 30000);   
+    return () => clearInterval(interval); 
+  }, [formData]);
 
   useEffect(() => {
     if (id) {
@@ -529,21 +525,21 @@ export const Editor: React.FC<{}> = () => {
 
           {/* Botón de Enviar */}
           <Grid item xs={12}>
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            onClick={handleSubmit}
-            sx={{ mt: 3 }}
-            disabled={
-              !formData.image ||
-              !formData.title ||
-              !formData.body ||
-              !formData.author
-            }
-          >
-            Guardar y Publicar
-          </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              onClick={handleSubmit}
+              sx={{ mt: 3 }}
+              disabled={
+                !formData.image ||
+                !formData.title ||
+                !formData.body ||
+                !formData.author
+              }
+            >
+              Guardar y Publicar
+            </Button>
             {!formData.image && (
               <Typography display="block" variant="overline" color="red">
                 Falta cargar la imagen principal
@@ -578,131 +574,20 @@ export const Editor: React.FC<{}> = () => {
         </Grid>
       </Box>
 
-      {/* Diálogo de éxito */}
-      <Dialog open={draftCreated} onClose={() => navigate("/")}>
-        <DialogTitle>Publicación creada</DialogTitle>
-        <DialogContent>
-          <DialogContentText>Borrador creado con éxito. ✔</DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              navigate("/");
-            }}
-            color="primary"
-            variant="contained"
-          >
-            Aceptar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Diálogo de éxito */}
-      <Dialog open={newCreated} onClose={() => navigate("/")}>
-        <DialogTitle>Publicada con éxito</DialogTitle>
-        <DialogContent>
-          <DialogContentText>Se publicó la nota ✔</DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              navigate("/");
-            }}
-            color="primary"
-            variant="contained"
-          >
-            Aceptar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Diálogo de éxito */}
-      <Dialog open={draftModified} onClose={() => navigate("/")}>
-        <DialogTitle>Borrador actualizado</DialogTitle>
+      {/* cuadro de diálogo */}
+      <Dialog open={isOpenDialog} onClose={() => navigate("/")}>
         <DialogContent>
           <DialogContentText>
-            Borrador actualizado con éxito. ✔
+            {message}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button
-            onClick={() => {
-              navigate("/");
-            }}
+            onClick={() => setIsOpenDialog(false)}
             color="primary"
             variant="contained"
           >
             Aceptar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Diálogo de error */}
-      <Dialog open={errorCreateDraft} onClose={() => navigate("/")}>
-        <DialogTitle>Error</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Al crear el borrador. No te preocupes, se descargó un respaldo de lo
-            que escribiste.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleRetry} color="error" variant="contained">
-            Reintentar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Diálogo de error */}
-      <Dialog open={errorCreateNew} onClose={() => navigate("/")}>
-        <DialogTitle>Error</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Al publicar la nota. Volvé a intentarlo más tarde.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              navigate("/");
-            }}
-            color="primary"
-            variant="contained"
-          >
-            Aceptar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={draftCreated} onClose={() => navigate("/")}>
-        <DialogTitle>Borrador creado</DialogTitle>
-        <DialogContent>
-          <DialogContentText>Borrador creado con éxito. ✔</DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              navigate("/");
-            }}
-            color="primary"
-            variant="contained"
-          >
-            Aceptar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Diálogo de error */}
-      <Dialog open={errorCreateDraft} onClose={() => navigate("/")}>
-        <DialogTitle>Error</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Ocurrió un error al generar borrador.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleRetry} color="error" variant="contained">
-            Reintentar
           </Button>
         </DialogActions>
       </Dialog>

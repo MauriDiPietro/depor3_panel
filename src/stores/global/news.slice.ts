@@ -34,10 +34,14 @@ export interface NewsState {
   isDraft: boolean;
   isPublished: boolean;
   isPatio: boolean;
+  isOpenDialog: boolean;
+  message: string;
 }
 
 export interface NewsActions {
   resetCargaDatosState: () => void;
+  setMessage: (message: string) => void;
+  setIsOpenDialog: (val: boolean) => void;
   getAllDrafts: (
     page: number,
     limit: number,
@@ -54,6 +58,7 @@ export interface NewsActions {
   getAllNewsPatio: (page: number, limit: number, title?: string) => void;
   setCurrentPage: (page: number) => void;
   createNew: (body: New) => void;
+  createNewDesdeDraft: (body: New, id: string) => void;
   updateNew: (id: string, body: New) => void;
   createDraft: (body: New) => void;
   updateDraft: (id: string, body: New) => void;
@@ -189,12 +194,16 @@ const initialState: NewsState = {
   draftModified: false,
   isDraft: false,
   isPublished: false,
-  isPatio: false
+  isPatio: false,
+  isOpenDialog: false,
+  message: ''
 };
 
 export const createNewsSlice: StateCreator<NewsSlice> = (set, get) => ({
   ...initialState,
   resetCargaDatosState: () => set({ ...initialState }),
+  setIsOpenDialog: (val: boolean) => set({ isOpenDialog: val }),
+  setMessage: (message: string) => set({ message }),
   setEdicion: (val: boolean) => set({ edicion: val }),
   setIsDraft: (val: boolean) => set({ isDraft: val }),
   setIsPublished: (val: boolean) => set({ isPublished: val }),
@@ -295,15 +304,36 @@ export const createNewsSlice: StateCreator<NewsSlice> = (set, get) => ({
     set({ loadingNews: true });
     try {
       localStorage.setItem("publicacion", JSON.stringify(body));
-      const response = await NewsService.createNew(body);
-      if (!response) throw new Error("Error al registrar noticia");
-      set({ newCreated: true });
-    } catch (error) {
       const blob = new Blob([JSON.stringify(body, null, 2)], {
         type: "application/json",
       });
       saveAs(blob, "publicacion.json");
-      set({ errorCreateNew: true });
+      const response = await NewsService.createNew(body);
+      if (!response) throw new Error("Error al registrar noticia");
+      set({ newCreated: true, isOpenDialog: true, message: 'Publicación creada con éxito' });
+    } catch (error) {
+      set({ errorCreateNew: true, isOpenDialog: true, message: 'Error al crear publicación' });
+    } finally {
+      if (get().newCreated) localStorage.removeItem("publicacion");
+      set({ loadingNews: false });
+    }
+  },
+  createNewDesdeDraft: async (body: New, id: string) => {
+    set({ loadingNews: true });
+    try {
+      localStorage.setItem("publicacion", JSON.stringify(body));
+      const blob = new Blob([JSON.stringify(body, null, 2)], {
+        type: "application/json",
+      });
+      saveAs(blob, "publicacion.json");
+      const response = await NewsService.createNew(body);
+      if (!response) throw new Error("Error al registrar noticia");
+      set({ newCreated: true, isOpenDialog: true, message: 'Publicación creada con éxito' });
+      if(get().newCreated) {
+        get().deleteDraftById(id);
+      }
+    } catch (error) {
+      set({ errorCreateNew: true, isOpenDialog: true, message: 'Error al crear publicación' });
     } finally {
       if (get().newCreated) localStorage.removeItem("publicacion");
       set({ loadingNews: false });
@@ -312,11 +342,15 @@ export const createNewsSlice: StateCreator<NewsSlice> = (set, get) => ({
   updateNew: async (id: string, body: New) => {
     set({ loadingNews: true });
     try {
+      const blob = new Blob([JSON.stringify(body, null, 2)], {
+        type: "application/json",
+      });
+      saveAs(blob, "publicacion.json");
       const response = await NewsService.updateNew(id, body);
       if (!response) throw new Error("Error al registrar noticia");
-      set({ newModified: true });
+      set({ newModified: true, isOpenDialog: true, message: 'Publicación actualizada con éxito' });
     } catch (error) {
-      set({ errorCreateNew: true });
+      set({ errorCreateNew: true, isOpenDialog: true, message: 'Error al actualizar publicación' });
     } finally {
       set({ loadingNews: false });
     }
@@ -375,17 +409,17 @@ export const createNewsSlice: StateCreator<NewsSlice> = (set, get) => ({
   createDraft: async (body: New) => {
     set({ loadingDrafts: true });
     try {
-      const response = await NewsService.createDraft(body);
-      if (!response) throw new Error("Error al registrar noticia");
-      // const response = await NewsService.createNew({ ...body, active: false });
-      // if (!response) throw new Error("Error al registrar borrador");
-      if (response) set({ draftCreated: true });
-    } catch (error) {
       const blob = new Blob([JSON.stringify(body, null, 2)], {
         type: "application/json",
       });
       saveAs(blob, "publicacion.json");
-      set({ errorCreateDraft: true });
+      const response = await NewsService.createDraft(body);
+      if (!response) throw new Error("Error al registrar noticia");
+      // const response = await NewsService.createNew({ ...body, active: false });
+      // if (!response) throw new Error("Error al registrar borrador");
+      if (response) set({ draftCreated: true, isOpenDialog: true, message: 'Borrador creado con éxito' });
+    } catch (error) {
+      set({ errorCreateDraft: true, isOpenDialog: true, message: 'Error al crear borrador' });
     } finally {
       set({ loadingDrafts: false });
     }
@@ -393,15 +427,18 @@ export const createNewsSlice: StateCreator<NewsSlice> = (set, get) => ({
   updateDraft: async (id: string, body: New) => {
     set({ loadingDrafts: true });
     try {
-      const response = await NewsService.updateDraft(id, body);
-      if (!response) throw new Error("Error al registrar noticia");
-      set({ draftModified: true });
-    } catch (error) {
       const blob = new Blob([JSON.stringify(body, null, 2)], {
         type: "application/json",
       });
       saveAs(blob, "publicacion.json");
-      set({ errorCreateDraft: true });
+      const response = await NewsService.updateDraft(id, body);
+      if (!response) throw new Error("Error al registrar noticia");
+      set({ draftModified: true, isOpenDialog: true, message: 'Borrador actualizado con éxito' });
+      setTimeout(()=>{
+        set({ isOpenDialog: false })
+      }, 2000)
+    } catch (error) {
+      set({ errorCreateDraft: true, isOpenDialog: true, message: 'Error al actualizar borrador' });
     } finally {
       set({ loadingDrafts: false });
     }
