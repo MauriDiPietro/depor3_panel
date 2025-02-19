@@ -147,11 +147,12 @@ export const Editor: React.FC<{}> = () => {
         //   </a>
         // </div>`;
         const imageHtml = `
-        <div id="${id}" style="position: relative; display: inline-block; margin: 10px;">
+        <figure style="text-align: center; margin: 10px;">
           <a href="${imageUrl}" target="_blank" rel="noopener noreferrer">
             <img src="${imageUrl}" alt="" style="max-width: 100%; display: block; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);" />
           </a>
-        </div>
+          <figcaption contenteditable="true" style="font-style: italic; margin-top: 5px; color: gray;">Escribe aquí el epígrafe...</figcaption>
+        </figure>
         `;
         setFormData((prev) => ({ ...prev, body: `${prev.body}${imageHtml}` }));
       }
