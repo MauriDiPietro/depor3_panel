@@ -60,6 +60,7 @@ export interface NewsActions {
   createNew: (body: New) => void;
   createNewDesdeDraft: (body: New, id: string) => void;
   updateNew: (id: string, body: New) => void;
+  updateNewPatio: (id: string, body: New) => void;
   createDraft: (body: New) => void;
   updateDraft: (id: string, body: New) => void;
   getNewById: (id: string) => void;
@@ -355,6 +356,22 @@ export const createNewsSlice: StateCreator<NewsSlice> = (set, get) => ({
       set({ loadingNews: false });
     }
   },
+  updateNewPatio: async (id: string, body: New) => {
+    set({ loadingNews: true });
+    try {
+      const blob = new Blob([JSON.stringify(body, null, 2)], {
+        type: "application/json",
+      });
+      saveAs(blob, "publicacion.json");
+      const response = await NewsService.updateNewPatio(id, body);
+      if (!response) throw new Error("Error al registrar noticia");
+      set({ newModified: true, isOpenDialog: true, message: 'Publicación actualizada con éxito' });
+    } catch (error) {
+      set({ errorCreateNew: true, isOpenDialog: true, message: 'Error al actualizar publicación' });
+    } finally {
+      set({ loadingNews: false });
+    }
+  },
   getAllDrafts: async (
     page: number,
     limit: number,
@@ -443,6 +460,5 @@ export const createNewsSlice: StateCreator<NewsSlice> = (set, get) => ({
       set({ loadingDrafts: false });
     }
   },
-
   setCurrentPage: (val: number) => set({ currentPage: val }),
 });

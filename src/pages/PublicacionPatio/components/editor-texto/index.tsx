@@ -26,7 +26,7 @@ export const Editor: React.FC<{}> = () => {
   const createNew = useGlobalStore((state) => state.createNew);
   const createDraft = useGlobalStore((state) => state.createDraft);
   const getNewPatioById = useGlobalStore((state) => state.getNewPatioById); // Función para obtener noticia
-  const updateNew = useGlobalStore((state) => state.updateNew);
+  const updateNewPatio = useGlobalStore((state) => state.updateNewPatio);
   const newDetail = useGlobalStore((state) => state.newPatio);
 
   const edicion = useGlobalStore((state) => state.edicion);
@@ -198,7 +198,7 @@ export const Editor: React.FC<{}> = () => {
     if (edicion && id) {
       // Si existe ID, estamos editando
       console.log("Editando noticia con ID:", id);
-      updateNew(id, { ...formData, active: true});
+      updateNewPatio(id, { ...formData, active: true});
     } else {
       console.log("Creando nueva noticia");
       createNew(formData);
@@ -210,7 +210,7 @@ export const Editor: React.FC<{}> = () => {
     if (edicion && id) {
       // Si existe ID, estamos editando
       console.log("Editando noticia con ID:", id);
-      updateNew(id, formData);
+      updateNewPatio(id, formData);
     } else {
       createDraft(formData);
     }

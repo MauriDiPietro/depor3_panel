@@ -27,6 +27,9 @@ const NewsService = {
   updateNew: (id: string, newData: New) => {
     return api.put(`/news/${id}`, newData);
   },
+  updateNewPatio: (id: string, newData: New) => {
+    return api.put(`/news/patio/${id}`, newData);
+  },
   deleteNewById: (id: string) => {
     return api.delete(`/news/${id}`);
   },
